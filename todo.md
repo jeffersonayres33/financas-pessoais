@@ -50,4 +50,14 @@
 - [x] Escrever testes unitários para procedures principais
 - [x] Testar fluxo completo de cadastro e visualização de dados
 - [x] Verificar responsividade em diferentes dispositivos
-- [ ] Criar checkpoint final
+- [x] Criar checkpoint final
+
+## Fase 8: Upload de Recibos e Notas Fiscais
+- [x] Criar tabela de attachments no banco de dados
+- [x] Implementar procedure tRPC para upload de fotos
+- [x] Implementar procedure tRPC para listar attachments de uma despesa
+- [x] Implementar procedure tRPC para deletar attachment
+- [x] Adicionar campo de upload na página de Expenses
+- [x] Criar galeria de fotos para visualizar recibos
+- [x] Adicionar validação de tipo de arquivo (apenas imagens)
+- [x] Testar upload e visualização de recibos

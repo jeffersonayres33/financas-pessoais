@@ -360,6 +360,54 @@ Formate a resposta em markdown com seções claras.`;
         };
       }),
   }),
+
+  attachments: router({
+    list: protectedProcedure
+      .input(z.object({ expenseId: z.number().int() }))
+      .query(async ({ ctx, input }) => {
+        const { getExpenseById, getExpenseAttachments } = await import("./db");
+        const expense = await getExpenseById(input.expenseId, ctx.user.id);
+        if (!expense) throw new Error("Expense not found");
+        return getExpenseAttachments(input.expenseId);
+      }),
+    
+    upload: protectedProcedure
+      .input(
+        z.object({
+          expenseId: z.number().int(),
+          fileName: z.string().min(1).max(255),
+          fileUrl: z.string().url(),
+          fileKey: z.string().min(1),
+          mimeType: z.string().min(1).max(50),
+          fileSize: z.number().int().min(1),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const { getExpenseById, createExpenseAttachment } = await import("./db");
+        const expense = await getExpenseById(input.expenseId, ctx.user.id);
+        if (!expense) throw new Error("Expense not found");
+        
+        const id = await createExpenseAttachment({
+          expenseId: input.expenseId,
+          fileName: input.fileName,
+          fileUrl: input.fileUrl,
+          fileKey: input.fileKey,
+          mimeType: input.mimeType,
+          fileSize: input.fileSize,
+          uploadedBy: ctx.user.id,
+        });
+        
+        return { id, url: input.fileUrl };
+      }),
+    
+    delete: protectedProcedure
+      .input(z.object({ id: z.number().int(), expenseId: z.number().int() }))
+      .mutation(async ({ ctx, input }) => {
+        const { deleteExpenseAttachment } = await import("./db");
+        await deleteExpenseAttachment(input.id, input.expenseId, ctx.user.id);
+        return { success: true };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

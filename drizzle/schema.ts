@@ -91,3 +91,20 @@ export const budgetNotifications = mysqlTable("budget_notifications", {
 
 export type BudgetNotification = typeof budgetNotifications.$inferSelect;
 export type InsertBudgetNotification = typeof budgetNotifications.$inferInsert;
+/**
+ * Anexos (fotos de recibos e notas fiscais)
+ */
+export const expenseAttachments = mysqlTable("expense_attachments", {
+  id: int("id").autoincrement().primaryKey(),
+  expenseId: int("expense_id").notNull().references(() => expenses.id, { onDelete: "cascade" }),
+  fileName: varchar("file_name", { length: 255 }).notNull(),
+  fileUrl: text("file_url").notNull(),
+  fileKey: varchar("file_key", { length: 255 }).notNull(),
+  mimeType: varchar("mime_type", { length: 50 }).notNull(),
+  fileSize: int("file_size").notNull(),
+  uploadedBy: int("uploaded_by").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type ExpenseAttachment = typeof expenseAttachments.$inferSelect;
+export type InsertExpenseAttachment = typeof expenseAttachments.$inferInsert;

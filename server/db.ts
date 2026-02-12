@@ -1,6 +1,6 @@
 import { and, between, desc, eq, sql, sum } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { budgetNotifications, categories, expenses, incomes, InsertCategory, InsertExpense, InsertIncome, InsertBudgetNotification, InsertUser, users } from "../drizzle/schema";
+import { budgetNotifications, categories, expenses, incomes, expenseAttachments, InsertCategory, InsertExpense, InsertIncome, InsertBudgetNotification, InsertExpenseAttachment, InsertUser, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -403,4 +403,37 @@ export async function hasNotificationBeenSent(
     .limit(1);
 
   return result.length > 0;
+}
+
+// ============= EXPENSE ATTACHMENTS =============
+
+export async function getExpenseAttachments(expenseId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db
+    .select()
+    .from(expenseAttachments)
+    .where(eq(expenseAttachments.expenseId, expenseId))
+    .orderBy(desc(expenseAttachments.createdAt));
+}
+
+export async function createExpenseAttachment(data: InsertExpenseAttachment) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(expenseAttachments).values(data);
+  return result[0].insertId;
+}
+
+export async function deleteExpenseAttachment(id: number, expenseId: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const expense = await getExpenseById(expenseId, userId);
+  if (!expense) throw new Error("Expense not found");
+
+  await db
+    .delete(expenseAttachments)
+    .where(and(eq(expenseAttachments.id, id), eq(expenseAttachments.expenseId, expenseId)));
 }

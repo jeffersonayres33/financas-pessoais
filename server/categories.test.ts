@@ -166,3 +166,106 @@ describe("analytics procedures", () => {
     expect(Array.isArray(categoryData)).toBe(true);
   });
 });
+
+
+describe("attachments procedures", () => {
+  it("should upload an attachment successfully", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const category = await caller.categories.create({
+      name: "Teste",
+      type: "expense",
+      monthlyBudget: 50000,
+    });
+
+    const expense = await caller.expenses.create({
+      establishment: "Teste",
+      categoryId: category.id,
+      purchaseDate: new Date(),
+      amount: 10000,
+      paid: "no",
+    });
+
+    const result = await caller.attachments.upload({
+      expenseId: expense.id,
+      fileName: "recibo.jpg",
+      fileUrl: "https://example.com/recibo.jpg",
+      fileKey: "test-key-123",
+      mimeType: "image/jpeg",
+      fileSize: 102400,
+    });
+
+    expect(result).toHaveProperty("id");
+    expect(result.url).toBe("https://example.com/recibo.jpg");
+  });
+
+  it("should list attachments for an expense", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const category = await caller.categories.create({
+      name: "Teste",
+      type: "expense",
+      monthlyBudget: 50000,
+    });
+
+    const expense = await caller.expenses.create({
+      establishment: "Teste",
+      categoryId: category.id,
+      purchaseDate: new Date(),
+      amount: 10000,
+      paid: "no",
+    });
+
+    await caller.attachments.upload({
+      expenseId: expense.id,
+      fileName: "recibo.jpg",
+      fileUrl: "https://example.com/recibo.jpg",
+      fileKey: "test-key-123",
+      mimeType: "image/jpeg",
+      fileSize: 102400,
+    });
+
+    const attachments = await caller.attachments.list({ expenseId: expense.id });
+
+    expect(Array.isArray(attachments)).toBe(true);
+    expect(attachments.length).toBe(1);
+    expect(attachments[0]?.fileName).toBe("recibo.jpg");
+  });
+
+  it("should delete an attachment", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const category = await caller.categories.create({
+      name: "Teste",
+      type: "expense",
+      monthlyBudget: 50000,
+    });
+
+    const expense = await caller.expenses.create({
+      establishment: "Teste",
+      categoryId: category.id,
+      purchaseDate: new Date(),
+      amount: 10000,
+      paid: "no",
+    });
+
+    const uploaded = await caller.attachments.upload({
+      expenseId: expense.id,
+      fileName: "recibo.jpg",
+      fileUrl: "https://example.com/recibo.jpg",
+      fileKey: "test-key-123",
+      mimeType: "image/jpeg",
+      fileSize: 102400,
+    });
+
+    const result = await caller.attachments.delete({
+      id: uploaded.id,
+      expenseId: expense.id,
+    });
+
+    expect(result.success).toBe(true);
+  });
+});
