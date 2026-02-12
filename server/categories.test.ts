@@ -306,3 +306,55 @@ describe("ocr procedures", () => {
     expect(result).toHaveProperty("confidence");
   });
 });
+
+
+describe("reports procedures", () => {
+  it("should generate monthly PDF report", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    // Criar categoria e despesa de teste
+    const category = await caller.categories.create({
+      name: "Teste",
+      type: "expense",
+      monthlyBudget: 50000,
+    });
+
+    const currentDate = new Date();
+    await caller.expenses.create({
+      establishment: "Teste Store",
+      categoryId: category.id,
+      purchaseDate: currentDate,
+      amount: 10000,
+      paid: "yes",
+    });
+
+    const result = await caller.reports.monthlyPDF({
+      month: currentDate.getMonth() + 1,
+      year: currentDate.getFullYear(),
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.fileName).toContain(".pdf");
+    expect(result.data).toBeDefined();
+    expect(typeof result.data).toBe("string");
+    // Verificar se é base64 válido
+    expect(result.data.length > 0).toBe(true);
+  });
+
+  it("should generate annual PDF report", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.reports.annualPDF({
+      year: new Date().getFullYear(),
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.fileName).toContain(".pdf");
+    expect(result.data).toBeDefined();
+    expect(typeof result.data).toBe("string");
+    // Verificar se é base64 válido
+    expect(result.data.length > 0).toBe(true);
+  });
+});

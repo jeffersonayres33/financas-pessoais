@@ -4,6 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { invokeLLM } from "./_core/llm";
+import { generateMonthlyReportPDF, generateAnnualReportPDF } from "./pdf-generator";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -489,6 +490,97 @@ Se não conseguir extrair algum campo, use null. Retorne APENAS o JSON válido, 
             notes: null,
           };
         }
+      }),
+  }),
+
+  // PDF Reports
+  reports: router({
+    monthlyPDF: protectedProcedure
+      .input(
+        z.object({
+          month: z.number().int().min(1).max(12),
+          year: z.number().int().min(2000),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const { getMonthlySummary, getExpensesByCategory } = await import("./db");
+
+        const summary = await getMonthlySummary(ctx.user.id, input.month, input.year);
+        const categoryExpenses = await getExpensesByCategory(ctx.user.id, input.month, input.year);
+
+        const pdfBuffer = generateMonthlyReportPDF({
+          month: input.month,
+          year: input.year,
+          totalIncome: summary.totalIncome,
+          totalExpense: summary.totalExpense,
+          balance: summary.balance,
+          categoryExpenses: categoryExpenses as any,
+        });
+
+        return {
+          success: true,
+          fileName: `relatorio_${input.month.toString().padStart(2, "0")}_${input.year}.pdf`,
+          data: pdfBuffer.toString("base64"),
+        };
+      }),
+
+    annualPDF: protectedProcedure
+      .input(
+        z.object({
+          year: z.number().int().min(2000),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const { getAnnualReport } = await import("./db");
+
+        const annualData = await getAnnualReport(ctx.user.id, input.year);
+
+        // Agrupar dados por mês
+        const monthlyData = Array.from({ length: 12 }, (_, i) => ({
+          month: i + 1,
+          totalIncome: 0,
+          totalExpense: 0,
+          balance: 0,
+        }));
+
+        // Calcular totais por mês
+        for (let month = 1; month <= 12; month++) {
+          const { getMonthlySummary } = await import("./db");
+          const summary = await getMonthlySummary(ctx.user.id, month, input.year);
+          const monthIndex = month - 1;
+          monthlyData[monthIndex].totalIncome = summary.totalIncome;
+          monthlyData[monthIndex].totalExpense = summary.totalExpense;
+          monthlyData[monthIndex].balance = summary.balance;
+        }
+
+        // Agrupar despesas por categoria
+        const categoryMap = new Map<number | null, { name: string; total: number }>();
+        for (const item of annualData) {
+          const key = item.categoryId;
+          if (!categoryMap.has(key)) {
+            categoryMap.set(key, { name: item.categoryName || "Sem categoria", total: 0 });
+          }
+          const current = categoryMap.get(key)!;
+          current.total += Number(item.totalSpent || 0);
+        }
+
+        const categoryExpenses = Array.from(categoryMap.entries()).map(([id, data]) => ({
+          categoryId: id || 0,
+          categoryName: data.name,
+          totalSpent: data.total,
+        }));
+
+        const pdfBuffer = generateAnnualReportPDF({
+          year: input.year,
+          monthlyData,
+          categoryExpenses,
+        });
+
+        return {
+          success: true,
+          fileName: `relatorio_anual_${input.year}.pdf`,
+          data: pdfBuffer.toString("base64"),
+        };
       }),
   }),
 });

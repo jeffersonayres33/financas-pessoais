@@ -1,5 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
+import { ReportDownloader } from "@/components/ReportDownloader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
@@ -146,6 +147,7 @@ export default function Reports() {
             <p className="text-muted-foreground">Visualize seus dados financeiros</p>
           </div>
           <div className="flex gap-2">
+            <ReportDownloader />
             <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(Number(v))}>
               <SelectTrigger className="w-[140px]">
                 <SelectValue />

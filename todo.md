@@ -70,3 +70,13 @@
 - [x] Pré-preencher formulário de despesa com dados extraídos
 - [x] Adicionar validação dos dados extraídos
 - [x] Testar OCR com diferentes tipos de recibos
+
+## Fase 10: Exportação de Relatórios em PDF
+- [x] Instalar dependências para geração de PDF (ReportLab ou similar)
+- [x] Criar procedure tRPC para gerar PDF de relatório mensal
+- [x] Criar procedure tRPC para gerar PDF de relatório anual
+- [x] Implementar geração de gráficos para PDF (pizza, barras)
+- [x] Adicionar resumo financeiro no PDF
+- [x] Adicionar listagem de despesas por categoria
+- [x] Criar interface para download de relatórios
+- [x] Testar geração de PDFs com diferentes dados
