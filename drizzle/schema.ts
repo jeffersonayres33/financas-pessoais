@@ -25,4 +25,69 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// TODO: Add your tables here
+/**
+ * Categorias de despesas e receitas
+ */
+export const categories = mysqlTable("categories", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  type: mysqlEnum("type", ["expense", "income"]).notNull(),
+  monthlyBudget: int("monthly_budget").notNull().default(0),
+  userId: int("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Category = typeof categories.$inferSelect;
+export type InsertCategory = typeof categories.$inferInsert;
+
+/**
+ * Despesas
+ */
+export const expenses = mysqlTable("expenses", {
+  id: int("id").autoincrement().primaryKey(),
+  establishment: varchar("establishment", { length: 200 }).notNull(),
+  categoryId: int("category_id").notNull().references(() => categories.id, { onDelete: "cascade" }),
+  purchaseDate: timestamp("purchase_date").notNull(),
+  amount: int("amount").notNull(), // valor em centavos
+  paid: mysqlEnum("paid", ["yes", "no"]).notNull().default("no"),
+  paymentDate: timestamp("payment_date"),
+  userId: int("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Expense = typeof expenses.$inferSelect;
+export type InsertExpense = typeof expenses.$inferInsert;
+
+/**
+ * Receitas
+ */
+export const incomes = mysqlTable("incomes", {
+  id: int("id").autoincrement().primaryKey(),
+  description: varchar("description", { length: 200 }).notNull(),
+  categoryId: int("category_id").notNull().references(() => categories.id, { onDelete: "cascade" }),
+  date: timestamp("date").notNull(),
+  amount: int("amount").notNull(), // valor em centavos
+  userId: int("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Income = typeof incomes.$inferSelect;
+export type InsertIncome = typeof incomes.$inferInsert;
+
+/**
+ * Notificações de orçamento
+ */
+export const budgetNotifications = mysqlTable("budget_notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  categoryId: int("category_id").notNull().references(() => categories.id, { onDelete: "cascade" }),
+  month: int("month").notNull(), // 1-12
+  year: int("year").notNull(),
+  percentage: int("percentage").notNull(), // 80 ou 100
+  notifiedAt: timestamp("notified_at").defaultNow().notNull(),
+});
+
+export type BudgetNotification = typeof budgetNotifications.$inferSelect;
+export type InsertBudgetNotification = typeof budgetNotifications.$inferInsert;
