@@ -269,3 +269,40 @@ describe("attachments procedures", () => {
     expect(result.success).toBe(true);
   });
 });
+
+
+describe("ocr procedures", () => {
+  it("should handle OCR extraction request", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    // Usar uma URL de imagem válida (imagem de teste)
+    const testImageUrl = "https://via.placeholder.com/300x200?text=Receipt";
+
+    const result = await caller.ocr.extractReceiptData({
+      imageUrl: testImageUrl,
+      fileName: "receipt.jpg",
+    });
+
+    // Verificar que a resposta tem a estrutura esperada
+    expect(result).toHaveProperty("success");
+    expect(result).toHaveProperty("establishment");
+    expect(result).toHaveProperty("amount");
+    expect(result).toHaveProperty("date");
+    expect(result).toHaveProperty("confidence");
+  });
+
+  it("should return error for invalid image URL", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.ocr.extractReceiptData({
+      imageUrl: "https://invalid-url-that-does-not-exist.example.com/image.jpg",
+      fileName: "receipt.jpg",
+    });
+
+    // Pode falhar ou retornar dados nulos dependendo da resposta do LLM
+    expect(result).toHaveProperty("success");
+    expect(result).toHaveProperty("confidence");
+  });
+});

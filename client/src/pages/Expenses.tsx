@@ -1,6 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
-import { ExpenseAttachmentUpload } from "@/components/ExpenseAttachmentUpload";
+import { ExpenseAttachmentUploadWithOCR } from "@/components/ExpenseAttachmentUploadWithOCR";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -318,7 +318,14 @@ export default function Expenses() {
                     <div className="flex items-center gap-4">
                       <p className="text-lg font-semibold">{formatCurrency(expense.expense.amount)}</p>
                       <div className="flex gap-2">
-                        <ExpenseAttachmentUpload expenseId={expense.expense.id} />
+                        <ExpenseAttachmentUploadWithOCR 
+                          expenseId={expense.expense.id}
+                          onExtractedData={(data) => {
+                            if (data.establishment) setFormData(prev => ({ ...prev, establishment: data.establishment }));
+                            if (data.amount) setFormData(prev => ({ ...prev, amount: (data.amount / 100).toString() }));
+                            if (data.date) setFormData(prev => ({ ...prev, purchaseDate: data.date }));
+                          }}
+                        />
                         <Button variant="ghost" size="icon" onClick={() => handleEdit(expense)}>
                           <Pencil className="h-4 w-4" />
                         </Button>

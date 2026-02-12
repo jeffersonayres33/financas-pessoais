@@ -3,6 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
+import { invokeLLM } from "./_core/llm";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -406,6 +407,88 @@ Formate a resposta em markdown com seções claras.`;
         const { deleteExpenseAttachment } = await import("./db");
         await deleteExpenseAttachment(input.id, input.expenseId, ctx.user.id);
         return { success: true };
+      }),
+  }),
+
+  // OCR - Extração de dados de recibos
+  ocr: router({
+    extractReceiptData: protectedProcedure
+      .input(
+        z.object({
+          imageUrl: z.string().url(),
+          fileName: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        try {
+          const response = await invokeLLM({
+            messages: [
+              {
+                role: "system",
+                content: `Você é um assistente especializado em extrair dados de recibos e notas fiscais. 
+Analize a imagem fornecida e extraia os seguintes dados em formato JSON:
+{
+  "establishment": "nome do estabelecimento ou loja",
+  "amount": "valor total em centavos (número inteiro, ex: 1500 para R$ 15,00)",
+  "date": "data no formato YYYY-MM-DD",
+  "confidence": "nível de confiança da extração (alto, médio, baixo)",
+  "notes": "observações adicionais se houver"
+}
+
+Se não conseguir extrair algum campo, use null. Retorne APENAS o JSON válido, sem explicações adicionais.`,
+              },
+              {
+                role: "user",
+                content: [
+                  {
+                    type: "text",
+                    text: "Por favor, extraia os dados deste recibo:",
+                  },
+                  {
+                    type: "image_url",
+                    image_url: {
+                      url: input.imageUrl,
+                      detail: "high",
+                    },
+                  },
+                ],
+              },
+            ],
+          });
+
+          const content = response.choices[0]?.message?.content;
+          if (!content || typeof content !== "string") {
+            throw new Error("Nenhuma resposta do LLM");
+          }
+
+          // Tentar extrair JSON da resposta
+          const jsonMatch = content.match(/\{[\s\S]*\}/);
+          if (!jsonMatch) {
+            throw new Error("Não foi possível extrair dados do recibo. Resposta: " + content);
+          }
+
+          const extractedData = JSON.parse(jsonMatch[0]);
+
+          // Validar e normalizar dados
+          return {
+            establishment: extractedData.establishment || null,
+            amount: extractedData.amount ? Number(extractedData.amount) : null,
+            date: extractedData.date || null,
+            confidence: extractedData.confidence || "baixo",
+            notes: extractedData.notes || null,
+            success: true,
+          };
+        } catch (error) {
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : "Erro ao processar recibo",
+            establishment: null,
+            amount: null,
+            date: null,
+            confidence: "baixo",
+            notes: null,
+          };
+        }
       }),
   }),
 });

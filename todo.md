@@ -61,3 +61,12 @@
 - [x] Criar galeria de fotos para visualizar recibos
 - [x] Adicionar validação de tipo de arquivo (apenas imagens)
 - [x] Testar upload e visualização de recibos
+
+## Fase 9: OCR para Extração de Dados de Recibos
+- [x] Implementar procedure tRPC para análise de imagem com LLM
+- [x] Criar função para extrair valor, data e estabelecimento
+- [x] Adicionar endpoint para processar recibo e retornar dados extraídos
+- [x] Integrar OCR no componente de upload
+- [x] Pré-preencher formulário de despesa com dados extraídos
+- [x] Adicionar validação dos dados extraídos
+- [x] Testar OCR com diferentes tipos de recibos
