@@ -1,19 +1,21 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { ArrowDownIcon, ArrowUpIcon, DollarSign, TrendingDown, TrendingUp, Wallet } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, TrendingUp, Wallet, DollarSign, Target } from "lucide-react";
 import { useMemo, useState } from "react";
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, ResponsiveContainer, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from "recharts";
+
+const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316", "#6366f1"];
 
 export default function Dashboard() {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
 
-  const { data: summary, isLoading: summaryLoading } = trpc.analytics.monthlySummary.useQuery(
+  const { data: summaryData, isLoading: summaryLoading } = trpc.analytics.monthlySummary.useQuery(
     { month: selectedMonth, year: selectedYear },
     { enabled: !!user }
   );
@@ -23,12 +25,53 @@ export default function Dashboard() {
     { enabled: !!user }
   );
 
+  const { data: annualData, isLoading: annualLoading } = trpc.analytics.annualReport.useQuery(
+    { year: selectedYear },
+    { enabled: !!user }
+  );
+
   const formatCurrency = (cents: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
     }).format(cents / 100);
   };
+
+  const pieChartData = useMemo(() => {
+    if (!categoryData) return [];
+    return categoryData
+      .map((cat) => ({
+        name: cat.categoryName || "Sem categoria",
+        value: Number(cat.totalSpent || 0),
+      }))
+      .filter((item) => item.value > 0);
+  }, [categoryData]);
+
+  const barChartData = useMemo(() => {
+    if (!categoryData) return [];
+    return categoryData.map((cat) => ({
+      name: cat.categoryName || "Sem categoria",
+      orcamento: cat.monthlyBudget || 0,
+      gasto: Number(cat.totalSpent || 0),
+    }));
+  }, [categoryData]);
+
+  const annualChartData = useMemo(() => {
+    if (!annualData) return [];
+    
+    const monthlyTotals = new Map<number, number>();
+    annualData.forEach((item) => {
+      const month = item.month;
+      const current = monthlyTotals.get(month) || 0;
+      monthlyTotals.set(month, current + Number(item.totalSpent || 0));
+    });
+
+    const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+    return Array.from({ length: 12 }, (_, i) => ({
+      month: months[i],
+      total: monthlyTotals.get(i + 1) || 0,
+    }));
+  }, [annualData]);
 
   const months = [
     { value: 1, label: "Janeiro" },
@@ -45,43 +88,27 @@ export default function Dashboard() {
     { value: 12, label: "Dezembro" },
   ];
 
-  const years = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    return Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
-  }, []);
+  const years = Array.from({ length: 5 }, (_, i) => currentDate.getFullYear() - i);
 
-  const categoryStats = useMemo(() => {
-    if (!categoryData) return [];
-    return categoryData.map((cat) => {
-      const spent = Number(cat.totalSpent || 0);
-      const budget = cat.monthlyBudget || 0;
-      const percentage = budget > 0 ? (spent / budget) * 100 : 0;
-      const status = percentage > 100 ? "over" : percentage > 80 ? "warning" : "good";
-      return { ...cat, spent, percentage, status };
-    });
-  }, [categoryData]);
+  const economyRate = summaryData
+    ? ((summaryData.totalIncome - summaryData.totalExpense) / summaryData.totalIncome * 100).toFixed(1)
+    : "0";
 
-  if (authLoading) {
-    return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-full">
-          <p className="text-muted-foreground">Carregando...</p>
-        </div>
-      </DashboardLayout>
-    );
-  }
+  const totalBudget = categoryData?.reduce((sum, cat) => sum + (cat.monthlyBudget || 0), 0) || 0;
+  const budgetUsagePercent = totalBudget > 0 ? ((summaryData?.totalExpense || 0) / totalBudget * 100).toFixed(1) : "0";
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div className="space-y-8">
+        {/* Header com título e filtros */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Dashboard Financeiro</h1>
-            <p className="text-muted-foreground">Visão geral das suas finanças</p>
+            <h1 className="text-4xl font-bold text-foreground">Painel Financeiro</h1>
+            <p className="text-muted-foreground mt-2">Visão geral das suas finanças</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(Number(v))}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-[160px] bg-card border-border">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -93,7 +120,7 @@ export default function Dashboard() {
               </SelectContent>
             </Select>
             <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(Number(v))}>
-              <SelectTrigger className="w-[100px]">
+              <SelectTrigger className="w-[120px] bg-card border-border">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -107,130 +134,218 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {summaryLoading ? (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {[1, 2, 3, 4].map((i) => (
-              <Card key={i}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <div className="h-4 w-24 bg-muted animate-pulse rounded" />
-                </CardHeader>
-                <CardContent>
-                  <div className="h-8 w-32 bg-muted animate-pulse rounded" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Receitas</CardTitle>
-                <ArrowUpIcon className="h-4 w-4 text-green-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">
-                  {formatCurrency(summary?.totalIncome || 0)}
+        {/* Cards de resumo com ícones e gradientes */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Receitas */}
+          <Card className="card-modern overflow-hidden">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-muted-foreground mb-1">Receitas</p>
+                  <p className="text-3xl font-bold text-green-600">
+                    {formatCurrency(summaryData?.totalIncome || 0)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">Entradas do mês</p>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Despesas</CardTitle>
-                <ArrowDownIcon className="h-4 w-4 text-red-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-red-600">
-                  {formatCurrency(summary?.totalExpense || 0)}
+                <div className="bg-green-100 dark:bg-green-900/30 p-3 rounded-lg">
+                  <ArrowUpRight className="h-6 w-6 text-green-600" />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Saldo do Mês</CardTitle>
-                <Wallet className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div
-                  className={`text-2xl font-bold ${
-                    (summary?.balance || 0) >= 0 ? "text-green-600" : "text-red-600"
-                  }`}
-                >
-                  {formatCurrency(summary?.balance || 0)}
+          {/* Despesas */}
+          <Card className="card-modern overflow-hidden">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-muted-foreground mb-1">Despesas</p>
+                  <p className="text-3xl font-bold text-red-600">
+                    {formatCurrency(summaryData?.totalExpense || 0)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">Saídas do mês</p>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Taxa de Economia</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {summary?.totalIncome
-                    ? `${(((summary.totalIncome - summary.totalExpense) / summary.totalIncome) * 100).toFixed(1)}%`
-                    : "0%"}
+                <div className="bg-red-100 dark:bg-red-900/30 p-3 rounded-lg">
+                  <ArrowDownRight className="h-6 w-6 text-red-600" />
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Orçamento por Categoria</CardTitle>
+          {/* Saldo */}
+          <Card className="card-modern overflow-hidden">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-muted-foreground mb-1">Saldo do Mês</p>
+                  <p className={`text-3xl font-bold ${(summaryData?.balance || 0) >= 0 ? "text-blue-600" : "text-red-600"}`}>
+                    {formatCurrency(summaryData?.balance || 0)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">Receitas - Despesas</p>
+                </div>
+                <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-lg">
+                  <Wallet className="h-6 w-6 text-blue-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Taxa de Economia */}
+          <Card className="card-modern overflow-hidden">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-muted-foreground mb-1">Taxa de Economia</p>
+                  <p className="text-3xl font-bold text-purple-600">{economyRate}%</p>
+                  <p className="text-xs text-muted-foreground mt-2">Do total de receitas</p>
+                </div>
+                <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-lg">
+                  <TrendingUp className="h-6 w-6 text-purple-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Gráficos */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Gráfico de Pizza - Distribuição de Despesas */}
+          <Card className="card-modern">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                <DollarSign className="h-5 w-5 text-blue-600" />
+                Distribuição de Despesas
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {pieChartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={pieChartData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, value }) => `${name}: ${formatCurrency(value)}`}
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {pieChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => formatCurrency(value as number)} />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                  Nenhuma despesa registrada
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Gráfico de Barras - Orçamento vs Gasto */}
+          <Card className="card-modern">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                <Target className="h-5 w-5 text-blue-600" />
+                Orçamento vs Gasto
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {barChartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={barChartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis dataKey="name" stroke="#64748b" style={{ fontSize: "12px" }} />
+                    <YAxis stroke="#64748b" style={{ fontSize: "12px" }} />
+                    <Tooltip formatter={(value) => formatCurrency(value as number)} />
+                    <Legend />
+                    <Bar dataKey="orcamento" fill="#3b82f6" name="Orçamento" radius={[8, 8, 0, 0]} />
+                    <Bar dataKey="gasto" fill="#ef4444" name="Gasto" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                  Nenhuma categoria configurada
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Gráfico de Linha - Evolução Anual */}
+        <Card className="card-modern">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg font-semibold flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-blue-600" />
+              Evolução de Gastos - {selectedYear}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            {categoryLoading ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-16 bg-muted animate-pulse rounded" />
-                ))}
-              </div>
-            ) : categoryStats.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">
-                Nenhuma categoria com despesas neste período
-              </p>
+            {annualChartData.some(d => d.total > 0) ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={annualChartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="month" stroke="#64748b" style={{ fontSize: "12px" }} />
+                  <YAxis stroke="#64748b" style={{ fontSize: "12px" }} />
+                  <Tooltip formatter={(value) => formatCurrency(value as number)} />
+                  <Legend />
+                  <Line
+                    type="monotone"
+                    dataKey="total"
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    dot={{ fill: "#3b82f6", r: 4 }}
+                    activeDot={{ r: 6 }}
+                    name="Total de Gastos"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             ) : (
-              <div className="space-y-4">
-                {categoryStats.map((cat) => (
-                  <div key={cat.categoryId} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{cat.categoryName}</span>
-                        {cat.status === "over" && (
-                          <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
-                            Acima do orçamento
-                          </span>
-                        )}
-                        {cat.status === "warning" && (
-                          <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded">
-                            Atenção
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {formatCurrency(cat.spent)} / {formatCurrency(cat.monthlyBudget || 0)}
-                      </div>
-                    </div>
-                    <div className="w-full bg-secondary rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full transition-all ${
-                          cat.status === "over"
-                            ? "bg-red-600"
-                            : cat.status === "warning"
-                            ? "bg-orange-500"
-                            : "bg-green-600"
-                        }`}
-                        style={{ width: `${Math.min(cat.percentage, 100)}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
+              <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                Nenhum dado disponível para este ano
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Resumo de Orçamento */}
+        <Card className="card-modern bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg font-semibold">Resumo de Orçamento</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Orçamento Total</p>
+                <p className="text-2xl font-bold text-blue-600">{formatCurrency(totalBudget)}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Gasto Total</p>
+                <p className="text-2xl font-bold text-red-600">{formatCurrency(summaryData?.totalExpense || 0)}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Utilização do Orçamento</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-2xl font-bold text-purple-600">{budgetUsagePercent}%</p>
+                  <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full transition-all ${
+                        Number(budgetUsagePercent) > 100
+                          ? "bg-red-600"
+                          : Number(budgetUsagePercent) > 80
+                          ? "bg-yellow-600"
+                          : "bg-green-600"
+                      }`}
+                      style={{ width: `${Math.min(Number(budgetUsagePercent), 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
