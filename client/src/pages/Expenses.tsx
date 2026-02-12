@@ -57,10 +57,10 @@ export default function Expenses() {
       ...(filterCategory !== "all" && { categoryId: Number(filterCategory) }),
       ...(filterPaid !== "all" && { paid: filterPaid as "yes" | "no" }),
     },
-    { enabled: !!user }
+    { enabled: !!user?.id }
   );
 
-  const { data: categories } = trpc.categories.list.useQuery({ type: "expense" }, { enabled: !!user });
+  const { data: categories } = trpc.categories.list.useQuery({ type: "expense" }, { enabled: !!user?.id });
   const utils = trpc.useUtils();
 
   const createMutation = trpc.expenses.create.useMutation({

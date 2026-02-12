@@ -115,3 +115,16 @@
 - [x] Implementar confirmação antes de excluir
 - [x] Corrigir falhas na Page 2
 - [x] Testar todas as funcionalidades de CRUD
+
+## Fase 14: Página "A Pagar" e Correção de Erros
+- [x] Criar página A Pagar com listagem de despesas não pagas
+- [x] Implementar filtros por mês/ano na página A Pagar
+- [x] Adicionar seleção de despesas (checkbox)
+- [x] Implementar botão "Pagar" com modal de data
+- [x] Atualizar status de pagamento e data no banco
+- [x] Remover despesa da tela após marcar como paga
+- [x] Fazer varredura de erros TypeScript
+- [x] Corrigir imports duplicados
+- [x] Validar tipos de dados
+- [x] Testar todas as funcionalidades
+- [x] Criar checkpoint final

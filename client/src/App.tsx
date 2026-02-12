@@ -10,6 +10,7 @@ import Expenses from "./pages/Expenses";
 import Incomes from "./pages/Incomes";
 import Reports from "./pages/Reports";
 import Insights from "./pages/Insights";
+import ToPay from "./pages/ToPay";
 
 function Router() {
   return (
@@ -20,6 +21,7 @@ function Router() {
       <Route path="/incomes" component={Incomes} />
       <Route path="/reports" component={Reports} />
       <Route path="/insights" component={Insights} />
+      <Route path="/a-pagar" component={ToPay} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
