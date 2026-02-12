@@ -102,3 +102,16 @@
 - [x] Adicionar persistência de layout do usuário
 - [x] Criar interface visual para reorganizar widgets
 - [x] Testar funcionalidade de customização
+
+## Fase 13: Correção de Page 2 e Botões de Ação no Menu
+- [x] Adicionar botão "Adicionar Despesa" no menu lateral
+- [x] Adicionar botão "Adicionar Categoria" no menu lateral
+- [x] Adicionar botão "Adicionar Receita" no menu lateral
+- [x] Implementar modal/formulário para criar nova despesa
+- [x] Implementar modal/formulário para criar nova categoria
+- [x] Implementar modal/formulário para criar nova receita
+- [x] Adicionar botões de editar em cada item da listagem
+- [x] Adicionar botões de excluir em cada item da listagem
+- [x] Implementar confirmação antes de excluir
+- [x] Corrigir falhas na Page 2
+- [x] Testar todas as funcionalidades de CRUD

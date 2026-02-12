@@ -21,15 +21,17 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Plus, DollarSign, Tag, TrendingUp } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Page 1", path: "/" },
-  { icon: Users, label: "Page 2", path: "/some-path" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+  { icon: DollarSign, label: "Despesas", path: "/expenses" },
+  { icon: TrendingUp, label: "Receitas", path: "/incomes" },
+  { icon: Tag, label: "Categorias", path: "/categories" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -178,8 +180,8 @@ function DashboardLayoutContent({
             </div>
           </SidebarHeader>
 
-          <SidebarContent className="gap-0">
-            <SidebarMenu className="px-2 py-1">
+          <SidebarContent className="gap-0 flex flex-col">
+            <SidebarMenu className="px-2 py-1 flex-1">
               {menuItems.map(item => {
                 const isActive = location === item.path;
                 return (
@@ -199,6 +201,35 @@ function DashboardLayoutContent({
                 );
               })}
             </SidebarMenu>
+            
+            {/* Botões de ação rápida */}
+            <div className="px-2 py-3 border-t space-y-2">
+              <p className="text-xs font-semibold text-muted-foreground px-2 mb-2">Ações Rápidas</p>
+              <Button
+                onClick={() => setLocation("/expenses")}
+                variant="outline"
+                className="w-full justify-start gap-2 h-9"
+              >
+                <Plus className="h-4 w-4" />
+                <span className="text-sm">Nova Despesa</span>
+              </Button>
+              <Button
+                onClick={() => setLocation("/incomes")}
+                variant="outline"
+                className="w-full justify-start gap-2 h-9"
+              >
+                <Plus className="h-4 w-4" />
+                <span className="text-sm">Nova Receita</span>
+              </Button>
+              <Button
+                onClick={() => setLocation("/categories")}
+                variant="outline"
+                className="w-full justify-start gap-2 h-9"
+              >
+                <Plus className="h-4 w-4" />
+                <span className="text-sm">Nova Categoria</span>
+              </Button>
+            </div>
           </SidebarContent>
 
           <SidebarFooter className="p-3">
