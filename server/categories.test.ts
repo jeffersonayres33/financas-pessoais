@@ -167,7 +167,6 @@ describe("analytics procedures", () => {
   });
 });
 
-
 describe("attachments procedures", () => {
   it("should upload an attachment successfully", async () => {
     const { ctx } = createAuthContext();
@@ -270,7 +269,6 @@ describe("attachments procedures", () => {
   });
 });
 
-
 describe("ocr procedures", () => {
   it("should handle OCR extraction request", async () => {
     const { ctx } = createAuthContext();
@@ -306,7 +304,6 @@ describe("ocr procedures", () => {
     expect(result).toHaveProperty("confidence");
   });
 });
-
 
 describe("reports procedures", () => {
   it("should generate monthly PDF report", async () => {
@@ -356,5 +353,20 @@ describe("reports procedures", () => {
     expect(typeof result.data).toBe("string");
     // Verificar se é base64 válido
     expect(result.data.length > 0).toBe(true);
+  });
+});
+
+describe("widgets procedures", () => {
+  it("should get default widget preferences for authenticated user", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+    const prefs = await caller.widgets.getPreferences();
+
+    expect(prefs).toBeDefined();
+    expect(Array.isArray(prefs)).toBe(true);
+    expect(prefs.length).toBeGreaterThan(0);
+    expect(prefs[0]).toHaveProperty("widgetId");
+    expect(prefs[0]).toHaveProperty("isVisible");
+    expect(prefs[0]).toHaveProperty("position");
   });
 });

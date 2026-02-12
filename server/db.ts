@@ -437,3 +437,72 @@ export async function deleteExpenseAttachment(id: number, expenseId: number, use
     .delete(expenseAttachments)
     .where(and(eq(expenseAttachments.id, id), eq(expenseAttachments.expenseId, expenseId)));
 }
+
+// ============= DASHBOARD WIDGET PREFERENCES =============
+export async function getDashboardWidgetPreferences(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const { dashboardWidgetPreferences } = await import("../drizzle/schema");
+  return db
+    .select()
+    .from(dashboardWidgetPreferences)
+    .where(eq(dashboardWidgetPreferences.userId, userId))
+    .orderBy(dashboardWidgetPreferences.position);
+}
+
+export async function updateWidgetPreferences(userId: number, preferences: Array<{ widgetId: string; isVisible: boolean; position: number }>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { dashboardWidgetPreferences } = await import("../drizzle/schema");
+  
+  // Deletar preferências antigas
+  await db.delete(dashboardWidgetPreferences).where(eq(dashboardWidgetPreferences.userId, userId));
+  
+  // Inserir novas preferências
+  if (preferences.length > 0) {
+    await db.insert(dashboardWidgetPreferences).values(
+      preferences.map(pref => ({
+        userId,
+        widgetId: pref.widgetId,
+        isVisible: pref.isVisible ? 1 : 0,
+        position: pref.position,
+      }))
+    );
+  }
+}
+
+export async function initializeDefaultWidgetPreferences(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const { dashboardWidgetPreferences } = await import("../drizzle/schema");
+  
+  // Verificar se já existem preferências
+  const existing = await db
+    .select()
+    .from(dashboardWidgetPreferences)
+    .where(eq(dashboardWidgetPreferences.userId, userId))
+    .limit(1);
+  
+  if (existing.length === 0) {
+    // Criar preferências padrão
+    const defaultWidgets = [
+      { widgetId: "income", isVisible: 1, position: 0 },
+      { widgetId: "expense", isVisible: 1, position: 1 },
+      { widgetId: "balance", isVisible: 1, position: 2 },
+      { widgetId: "economy", isVisible: 1, position: 3 },
+      { widgetId: "pie", isVisible: 1, position: 4 },
+      { widgetId: "bar", isVisible: 1, position: 5 },
+      { widgetId: "line", isVisible: 1, position: 6 },
+      { widgetId: "budget", isVisible: 1, position: 7 },
+    ];
+    
+    await db.insert(dashboardWidgetPreferences).values(
+      defaultWidgets.map(w => ({
+        userId,
+        widgetId: w.widgetId,
+        isVisible: w.isVisible,
+        position: w.position,
+      }))
+    );
+  }
+}

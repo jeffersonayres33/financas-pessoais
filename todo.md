@@ -92,3 +92,13 @@
 - [x] Otimizar responsividade para mobile
 - [x] Adicionar animações de transição suaves
 - [x] Testar experiência do usuário em diferentes dispositivos
+
+## Fase 12: Widgets Customizáveis na Dashboard
+- [x] Criar tabela de preferências de widgets no banco de dados
+- [x] Implementar procedures tRPC para salvar/carregar preferências de widgets
+- [x] Criar componente de modo edição com drag-and-drop
+- [x] Adicionar botão para ativar/desativar modo de edição
+- [x] Implementar funcionalidade de ocultar/mostrar widgets
+- [x] Adicionar persistência de layout do usuário
+- [x] Criar interface visual para reorganizar widgets
+- [x] Testar funcionalidade de customização

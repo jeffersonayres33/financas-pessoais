@@ -108,3 +108,19 @@ export const expenseAttachments = mysqlTable("expense_attachments", {
 
 export type ExpenseAttachment = typeof expenseAttachments.$inferSelect;
 export type InsertExpenseAttachment = typeof expenseAttachments.$inferInsert;
+
+/**
+ * Preferências de widgets do usuário na Dashboard
+ */
+export const dashboardWidgetPreferences = mysqlTable("dashboard_widget_preferences", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  widgetId: varchar("widget_id", { length: 50 }).notNull(), // "income", "expense", "balance", "economy", "pie", "bar", "line", "budget"
+  isVisible: int("is_visible").notNull().default(1), // 0 ou 1
+  position: int("position").notNull().default(0), // ordem de exibição
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type DashboardWidgetPreference = typeof dashboardWidgetPreferences.$inferSelect;
+export type InsertDashboardWidgetPreference = typeof dashboardWidgetPreferences.$inferInsert;

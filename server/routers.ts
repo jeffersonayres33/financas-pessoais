@@ -582,7 +582,40 @@ Se não conseguir extrair algum campo, use null. Retorne APENAS o JSON válido, 
           data: pdfBuffer.toString("base64"),
         };
       }),
+   }),
+
+  // Dashboard Widget Preferences
+  widgets: router({
+    getPreferences: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { getDashboardWidgetPreferences, initializeDefaultWidgetPreferences } = await import("./db");
+        
+        // Inicializar preferências padrão se não existirem
+        await initializeDefaultWidgetPreferences(ctx.user.id);
+        
+        const prefs = await getDashboardWidgetPreferences(ctx.user.id);
+        return prefs.map(p => ({
+          widgetId: p.widgetId,
+          isVisible: p.isVisible === 1,
+          position: p.position,
+        }));
+      }),
+    
+    updatePreferences: protectedProcedure
+      .input(
+        z.array(
+          z.object({
+            widgetId: z.string(),
+            isVisible: z.boolean(),
+            position: z.number().int().min(0),
+          })
+        )
+      )
+      .mutation(async ({ ctx, input }) => {
+        const { updateWidgetPreferences } = await import("./db");
+        await updateWidgetPreferences(ctx.user.id, input);
+        return { success: true };
+      }),
   }),
 });
-
 export type AppRouter = typeof appRouter;
