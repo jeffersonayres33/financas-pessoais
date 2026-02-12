@@ -56,7 +56,7 @@ function SelectContent({
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Content>) {
   return (
-    <SelectPrimitive.Portal>
+    <SelectPrimitive.Portal container={typeof document !== 'undefined' ? document.body : undefined}>
       <SelectPrimitive.Content
         data-slot="select-content"
         className={cn(
@@ -83,6 +83,13 @@ function SelectContent({
       </SelectPrimitive.Content>
     </SelectPrimitive.Portal>
   );
+}
+
+// Ensure portal container exists
+if (typeof document !== 'undefined' && !document.getElementById('radix-portal-root')) {
+  const portalRoot = document.createElement('div');
+  portalRoot.id = 'radix-portal-root';
+  document.body.appendChild(portalRoot);
 }
 
 function SelectLabel({
