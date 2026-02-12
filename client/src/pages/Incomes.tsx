@@ -1,5 +1,5 @@
-import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -52,10 +52,10 @@ export default function Incomes() {
       endDate,
       ...(filterCategory !== "all" && { categoryId: Number(filterCategory) }),
     },
-    { enabled: !!user }
+    { enabled: !!user?.id }
   );
 
-  const { data: categories } = trpc.categories.list.useQuery({ type: "income" }, { enabled: !!user });
+  const { data: categories } = trpc.categories.list.useQuery({ type: "income" }, { enabled: !!user?.id });
   const utils = trpc.useUtils();
 
   const createMutation = trpc.incomes.create.useMutation({

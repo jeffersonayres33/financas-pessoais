@@ -39,7 +39,11 @@ export function ReportDownloader() {
         link.download = data.fileName;
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
+        try {
+          document.body.removeChild(link);
+        } catch (e) {
+          // Link já foi removido ou não está mais no DOM
+        }
         window.URL.revokeObjectURL(url);
 
         toast.success("Relatório baixado com sucesso!");
@@ -69,7 +73,11 @@ export function ReportDownloader() {
         link.download = data.fileName;
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
+        try {
+          document.body.removeChild(link);
+        } catch (e) {
+          // Link já foi removido ou não está mais no DOM
+        }
         window.URL.revokeObjectURL(url);
 
         toast.success("Relatório baixado com sucesso!");
