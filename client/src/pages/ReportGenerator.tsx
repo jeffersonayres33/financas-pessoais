@@ -18,6 +18,7 @@ interface ReportFilters {
   users: number[];
   type: "all" | "expense" | "income";
   paymentStatus: "all" | "paid" | "unpaid";
+  periodType: "custom" | "week" | "month" | "year";
 }
 
 export default function ReportGenerator() {
@@ -29,7 +30,41 @@ export default function ReportGenerator() {
     users: [],
     type: "all",
     paymentStatus: "all",
+    periodType: "month",
   });
+
+  // Função para calcular datas baseado no tipo de período
+  const calculatePeriodDates = (periodType: string) => {
+    const today = new Date();
+    let startDate: Date;
+    let endDate = new Date(today);
+
+    switch (periodType) {
+      case "week":
+        // Última semana (7 dias)
+        startDate = new Date(today);
+        startDate.setDate(today.getDate() - 7);
+        break;
+      case "month":
+        // Mês atual
+        startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+        break;
+      case "year":
+        // Ano atual
+        startDate = new Date(today.getFullYear(), 0, 1);
+        break;
+      default:
+        // Custom - não alterar
+        return;
+    }
+
+    setFilters({
+      ...filters,
+      periodType: periodType as any,
+      startDate: startDate.toISOString().split("T")[0],
+      endDate: endDate.toISOString().split("T")[0],
+    });
+  };
 
   const [selectedCategories, setSelectedCategories] = useState<Set<number>>(new Set());
   const [selectedUsers, setSelectedUsers] = useState<Set<number>>(new Set());
@@ -124,24 +159,44 @@ export default function ReportGenerator() {
             <CardDescription>Personalize seu relatório com filtros</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Data Range */}
+            {/* Period Type */}
             <div className="space-y-2">
-              <Label>Data Inicial</Label>
-              <Input
-                type="date"
-                value={filters.startDate}
-                onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-              />
+              <Label>Período</Label>
+              <Select value={filters.periodType} onValueChange={(value) => calculatePeriodDates(value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="week">Esta Semana</SelectItem>
+                  <SelectItem value="month">Este Mês</SelectItem>
+                  <SelectItem value="year">Este Ano</SelectItem>
+                  <SelectItem value="custom">Personalizado</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label>Data Final</Label>
-              <Input
-                type="date"
-                value={filters.endDate}
-                onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-              />
-            </div>
+            {/* Data Range - apenas se custom */}
+            {filters.periodType === "custom" && (
+              <>
+                <div className="space-y-2">
+                  <Label>Data Inicial</Label>
+                  <Input
+                    type="date"
+                    value={filters.startDate}
+                    onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Data Final</Label>
+                  <Input
+                    type="date"
+                    value={filters.endDate}
+                    onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
+                  />
+                </div>
+              </>
+            )}
 
             {/* Type Filter */}
             <div className="space-y-2">
@@ -246,7 +301,8 @@ export default function ReportGenerator() {
             <div className="space-y-2">
               <p className="text-sm font-semibold text-foreground">Filtros Aplicados:</p>
               <div className="space-y-1 text-sm text-muted-foreground">
-                <p>📅 Período: {filters.startDate} a {filters.endDate}</p>
+                <p>📅 Período: {filters.periodType === "week" ? "Esta Semana" : filters.periodType === "month" ? "Este Mês" : filters.periodType === "year" ? "Este Ano" : "Personalizado"}</p>
+                <p>📆 Datas: {new Date(filters.startDate).toLocaleDateString("pt-BR")} a {new Date(filters.endDate).toLocaleDateString("pt-BR")}</p>
                 <p>📊 Tipo: {filters.type === "all" ? "Todos" : filters.type === "expense" ? "Despesas" : "Receitas"}</p>
                 {selectedCategories.size > 0 && <p>🏷️ Categorias: {selectedCategories.size} selecionadas</p>}
                 {filters.paymentStatus !== "all" && (

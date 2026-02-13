@@ -142,3 +142,11 @@
 - [x] Adicionar link no menu lateral
 - [x] Testar geração de relatórios com diferentes filtros
 - [x] Criar checkpoint final
+
+## Fase 16: Filtro de Período na Seção de Relatórios
+- [x] Adicionar seletor de período (semana, mês, ano) na página ReportGenerator
+- [x] Implementar lógica de cálculo de datas para cada período
+- [x] Atualizar preview de dados conforme período selecionado
+- [x] Adicionar indicador visual do período selecionado
+- [x] Testar filtro com diferentes períodos
+- [x] Criar checkpoint final
