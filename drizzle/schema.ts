@@ -124,3 +124,27 @@ export const dashboardWidgetPreferences = mysqlTable("dashboard_widget_preferenc
 
 export type DashboardWidgetPreference = typeof dashboardWidgetPreferences.$inferSelect;
 export type InsertDashboardWidgetPreference = typeof dashboardWidgetPreferences.$inferInsert;
+
+
+/**
+ * Logs de erros para análise e rastreamento
+ */
+export const errorLogs = mysqlTable("error_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id").references(() => users.id, { onDelete: "cascade" }),
+  errorType: varchar("error_type", { length: 50 }).notNull(), // "DOM", "Network", "Application"
+  errorMessage: text("error_message").notNull(),
+  errorStack: text("error_stack"),
+  componentStack: text("component_stack"),
+  browser: varchar("browser", { length: 100 }).notNull(), // "Chrome", "Firefox", "Safari", "Edge"
+  browserVersion: varchar("browser_version", { length: 50 }),
+  page: varchar("page", { length: 255 }).notNull(), // URL da página onde ocorreu o erro
+  userAgent: text("user_agent"),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  resolved: int("resolved").notNull().default(0), // 0 ou 1
+  resolvedAt: timestamp("resolved_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type ErrorLog = typeof errorLogs.$inferSelect;
+export type InsertErrorLog = typeof errorLogs.$inferInsert;

@@ -184,3 +184,13 @@
 - [x] Integrar Error Boundary na aplicação
 - [x] Testar captura de erros de DOM
 - [x] Testar recovery e reset de estado
+
+## Fase 21: Painel de Análise de Erros
+- [x] Criar tabela error_logs no banco de dados
+- [x] Implementar API tRPC para registrar erros
+- [x] Implementar API tRPC para consultar erros com filtros
+- [x] Criar página ErrorAnalytics com gráficos
+- [x] Adicionar filtros por tipo, navegador e página
+- [x] Integrar logging automático no ErrorBoundary
+- [x] Adicionar link no menu lateral (admin only)
+- [x] Testar rastreamento de erros

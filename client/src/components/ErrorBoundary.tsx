@@ -36,17 +36,59 @@ class ErrorBoundary extends Component<Props, State> {
     this.logErrorToService(error, errorInfo);
   }
 
-  logErrorToService = (error: Error, errorInfo: React.ErrorInfo) => {
-    const errorData = {
-      message: error.message,
-      stack: error.stack,
-      componentStack: errorInfo.componentStack,
-      timestamp: new Date().toISOString(),
-      userAgent: navigator.userAgent,
-      url: window.location.href,
-    };
+  getBrowserInfo = (): { browser: string; version: string } => {
+    const ua = navigator.userAgent;
+    let browser = "Unknown";
+    let version = "Unknown";
 
-    console.log("[ErrorBoundary] Error data:", errorData);
+    if (ua.indexOf("Chrome") > -1) {
+      browser = "Chrome";
+      version = ua.split("Chrome/")[1]?.split(" ")[0] || "Unknown";
+    } else if (ua.indexOf("Safari") > -1 && ua.indexOf("Chrome") === -1) {
+      browser = "Safari";
+      version = ua.split("Version/")[1]?.split(" ")[0] || "Unknown";
+    } else if (ua.indexOf("Firefox") > -1) {
+      browser = "Firefox";
+      version = ua.split("Firefox/")[1] || "Unknown";
+    } else if (ua.indexOf("Edge") > -1) {
+      browser = "Edge";
+      version = ua.split("Edge/")[1] || "Unknown";
+    }
+
+    return { browser, version };
+  };
+
+  logErrorToService = async (error: Error, errorInfo: React.ErrorInfo) => {
+    try {
+      const errorType = this.isDOMError() ? "DOM" : this.isNetworkError() ? "Network" : "Application";
+      const browserInfo = this.getBrowserInfo();
+
+      const payload = {
+        errorType,
+        errorMessage: error.message,
+        errorStack: error.stack || "",
+        componentStack: errorInfo.componentStack || "",
+        browser: browserInfo.browser,
+        browserVersion: browserInfo.version,
+        page: window.location.pathname,
+        userAgent: navigator.userAgent,
+      };
+
+      // Log to server via tRPC
+      await fetch("/api/trpc/errorLogs.log", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          json: payload,
+        }),
+      }).catch((err) => {
+        console.warn("[ErrorBoundary] Failed to log error to server:", err);
+      });
+    } catch (err) {
+      console.error("[ErrorBoundary] Error logging to service:", err);
+    }
   };
 
   handleReset = () => {

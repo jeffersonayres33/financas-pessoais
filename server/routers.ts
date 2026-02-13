@@ -617,5 +617,113 @@ Se não conseguir extrair algum campo, use null. Retorne APENAS o JSON válido, 
         return { success: true };
       }),
   }),
+
+  // Error Logs
+  errorLogs: router({
+    log: publicProcedure
+      .input(
+        z.object({
+          errorType: z.enum(["DOM", "Network", "Application"]),
+          errorMessage: z.string(),
+          errorStack: z.string().optional(),
+          componentStack: z.string().optional(),
+          browser: z.string(),
+          browserVersion: z.string().optional(),
+          page: z.string(),
+          userAgent: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const { logError } = await import("./error-logs");
+        try {
+          await logError({
+            userId: ctx.user?.id,
+            ...input,
+          });
+          return { success: true };
+        } catch (error) {
+          console.error("[ErrorLogs] Failed to log error:", error);
+          return { success: false };
+        }
+      }),
+
+    getStats: protectedProcedure
+      .input(
+        z.object({
+          startDate: z.date().optional(),
+          endDate: z.date().optional(),
+        })
+      )
+      .query(async ({ ctx, input }) => {
+        // Only admin can view error stats
+        if (ctx.user.role !== "admin") {
+          throw new Error("Unauthorized");
+        }
+
+        const { getTotalErrorCount, getErrorsByType, getErrorsByBrowser, getErrorsByPage } = await import("./error-logs");
+
+        const [totalCount, byType, byBrowser, byPage] = await Promise.all([
+          getTotalErrorCount(input),
+          getErrorsByType(input),
+          getErrorsByBrowser(input),
+          getErrorsByPage({ ...input, limit: 10 }),
+        ]);
+
+        return {
+          totalCount,
+          byType,
+          byBrowser,
+          byPage,
+        };
+      }),
+
+    getList: protectedProcedure
+      .input(
+        z.object({
+          errorType: z.string().optional(),
+          browser: z.string().optional(),
+          page: z.string().optional(),
+          startDate: z.date().optional(),
+          endDate: z.date().optional(),
+          limit: z.number().int().min(1).max(100).default(20),
+          offset: z.number().int().min(0).default(0),
+        })
+      )
+      .query(async ({ ctx, input }) => {
+        // Only admin can view error logs
+        if (ctx.user.role !== "admin") {
+          throw new Error("Unauthorized");
+        }
+
+        const { getErrorLogs } = await import("./error-logs");
+        return getErrorLogs(input);
+      }),
+
+    markResolved: protectedProcedure
+      .input(z.object({ errorId: z.number().int() }))
+      .mutation(async ({ ctx, input }) => {
+        // Only admin can mark errors as resolved
+        if (ctx.user.role !== "admin") {
+          throw new Error("Unauthorized");
+        }
+
+        const { markErrorAsResolved } = await import("./error-logs");
+        await markErrorAsResolved(input.errorId);
+        return { success: true };
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ errorId: z.number().int() }))
+      .mutation(async ({ ctx, input }) => {
+        // Only admin can delete errors
+        if (ctx.user.role !== "admin") {
+          throw new Error("Unauthorized");
+        }
+
+        const { deleteError } = await import("./error-logs");
+        await deleteError(input.errorId);
+        return { success: true };
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;

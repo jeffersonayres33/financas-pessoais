@@ -1,0 +1,8 @@
+{
+  "query": "TRUNCATE TABLE dashboard_widget_preferences; TRUNCATE TABLE expense_attachments; TRUNCATE TABLE budget_notifications; TRUNCATE TABLE expenses; TRUNCATE TABLE incomes; TRUNCATE TABLE categories; TRUNCATE TABLE users;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3FdQrkWsT1QirDG.root --database EjA4uyxuZxRJw3mJZ2eHtg --execute TRUNCATE TABLE dashboard_widget_preferences; TRUNCATE TABLE expense_attachments; TRUNCATE TABLE budget_notifications; TRUNCATE TABLE expenses; TRUNCATE TABLE incomes; TRUNCATE TABLE categories; TRUNCATE TABLE users;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1701 (42000) at line 1: Cannot truncate a table referenced in a foreign key constraint (`EjA4uyxuZxRJw3mJZ2eHtg`.`expense_attachments` CONSTRAINT `expense_attachments_expense_id_expenses_id_fk`)"
+  ]
+}
