@@ -62,14 +62,7 @@ function DialogTrigger({
 function DialogPortal({
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Portal>) {
-  return <DialogPrimitive.Portal data-slot="dialog-portal" container={typeof document !== 'undefined' ? document.body : undefined} {...props} />;
-}
-
-// Ensure portal container exists
-if (typeof document !== 'undefined' && !document.getElementById('radix-dialog-portal-root')) {
-  const portalRoot = document.createElement('div');
-  portalRoot.id = 'radix-dialog-portal-root';
-  document.body.appendChild(portalRoot);
+  return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />;
 }
 
 function DialogClose({
