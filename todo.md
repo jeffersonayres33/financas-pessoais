@@ -176,3 +176,11 @@
 - [x] Corrigir portais Radix UI para Chrome
 - [x] Adicionar try-catch defensivos em cleanup
 - [x] Testar em Chrome, Firefox e Safari
+
+## Fase 20: Error Boundary Customizado
+- [x] Criar componente ErrorBoundary com captura de erros
+- [x] Implementar UI amigável de erro com ações
+- [x] Adicionar logging de erros para debugging
+- [x] Integrar Error Boundary na aplicação
+- [x] Testar captura de erros de DOM
+- [x] Testar recovery e reset de estado
