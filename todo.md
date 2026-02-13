@@ -128,3 +128,17 @@
 - [x] Validar tipos de dados
 - [x] Testar todas as funcionalidades
 - [x] Criar checkpoint final
+
+## Fase 15: Nova Seção "Relatório" com Filtros Avançados
+- [x] Criar página ReportGenerator.tsx com filtros personalizados
+- [x] Implementar filtros por data (período customizado)
+- [x] Implementar filtros por categoria
+- [x] Implementar filtros por usuário
+- [x] Implementar filtros por tipo (despesa/receita)
+- [x] Implementar filtros por status de pagamento
+- [x] Adicionar preview de dados antes de gerar PDF
+- [x] Implementar gerador de PDF com dados filtrados
+- [x] Adicionar opções de formato (PDF, Excel)
+- [x] Adicionar link no menu lateral
+- [x] Testar geração de relatórios com diferentes filtros
+- [x] Criar checkpoint final
