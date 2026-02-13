@@ -1,0 +1,9 @@
+{
+  "query": "SET FOREIGN_KEY_CHECKS = 0;\nDELETE FROM dashboard_widget_preferences;\nDELETE FROM expense_attachments;\nDELETE FROM budget_notifications;\nDELETE FROM expenses;\nDELETE FROM incomes;\nDELETE FROM categories;\nDELETE FROM users;\nSET FOREIGN_KEY_CHECKS = 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3FdQrkWsT1QirDG.root --database EjA4uyxuZxRJw3mJZ2eHtg --execute SET FOREIGN_KEY_CHECKS = 0;\nDELETE FROM dashboard_widget_preferences;\nDELETE FROM expense_attachments;\nDELETE FROM budget_notifications;\nDELETE FROM expenses;\nDELETE FROM incomes;\nDELETE FROM categories;\nDELETE FROM users;\nSET FOREIGN_KEY_CHECKS = 1;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 135
+}

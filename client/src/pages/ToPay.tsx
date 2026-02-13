@@ -133,7 +133,21 @@ export default function ToPay() {
     return categories?.find((c) => c.id === categoryId)?.name || "Sem categoria";
   };
 
+  const formatCurrency = (cents: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(cents / 100);
+  };
+
   const totalUnpaid = unpaidExpenses?.reduce((sum, e) => sum + e.expense.amount, 0) || 0;
+  
+  const totalSelected = useMemo(() => {
+    if (!unpaidExpenses) return 0;
+    return unpaidExpenses
+      .filter((item) => selectedExpenses.has(item.expense.id))
+      .reduce((sum, item) => sum + item.expense.amount, 0);
+  }, [selectedExpenses, unpaidExpenses]);
 
   return (
     <DashboardLayout>
@@ -202,7 +216,7 @@ export default function ToPay() {
               <div>
                 <p className="text-sm text-red-700">Total a Pagar</p>
                 <p className="text-2xl font-bold text-red-900">
-                  R$ {totalUnpaid.toFixed(2).replace(".", ",")}
+                  {formatCurrency(totalUnpaid)}
                 </p>
               </div>
             </div>
@@ -214,7 +228,7 @@ export default function ToPay() {
           <Card className="bg-blue-50 border-blue-200">
             <CardContent className="pt-6 flex items-center justify-between">
               <p className="text-sm font-medium text-blue-900">
-                {selectedExpenses.size} despesa(s) selecionada(s)
+                {selectedExpenses.size} despesa(s) selecionada(s) • Total: {formatCurrency(totalSelected)}
               </p>
               <Button
                 onClick={handlePaySelected}
@@ -287,7 +301,7 @@ export default function ToPay() {
                           </div>
                           <div className="text-right">
                             <p className="text-lg font-bold text-gray-900">
-                              R$ {expense.amount.toFixed(2).replace(".", ",")}
+                              {formatCurrency(expense.amount)}
                             </p>
                             <p className="text-xs text-gray-500">
                               {format(new Date(expense.purchaseDate), "dd 'de' MMMM", {

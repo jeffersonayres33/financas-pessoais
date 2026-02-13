@@ -1,0 +1,9 @@
+{
+  "query": "\n-- Desabilitar verificação de chaves estrangeiras temporariamente\nSET FOREIGN_KEY_CHECKS = 0;\n\n-- Limpar todas as tabelas\nDELETE FROM dashboard_widget_preferences;\nDELETE FROM expense_attachments;\nDELETE FROM budget_notifications;\nDELETE FROM expenses;\nDELETE FROM incomes;\nDELETE FROM categories;\nDELETE FROM users;\n\n-- Reabilitar verificação de chaves estrangeiras\nSET FOREIGN_KEY_CHECKS = 1;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3FdQrkWsT1QirDG.root --database EjA4uyxuZxRJw3mJZ2eHtg --execute \n-- Desabilitar verificação de chaves estrangeiras temporariamente\nSET FOREIGN_KEY_CHECKS = 0;\n\n-- Limpar todas as tabelas\nDELETE FROM dashboard_widget_preferences;\nDELETE FROM expense_attachments;\nDELETE FROM budget_notifications;\nDELETE FROM expenses;\nDELETE FROM incomes;\nDELETE FROM categories;\nDELETE FROM users;\n\n-- Reabilitar verificação de chaves estrangeiras\nSET FOREIGN_KEY_CHECKS = 1;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 147
+}

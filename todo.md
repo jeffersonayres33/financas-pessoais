@@ -160,3 +160,11 @@
 - [x] Confirmar que "A Pagar" está correto no código-fonte
 - [x] Testes passando (16 testes)
 - [x] Build concluído com sucesso
+
+## Fase 18: Correção de Formato de Valores em "A Pagar"
+- [x] Corrigir formato de valores em centavos para reais em "A Pagar"
+- [x] Adicionar função formatCurrency em ToPay.tsx
+- [x] Adicionar cálculo de total das despesas selecionadas
+- [x] Mostrar total selecionado na mensagem de seleção
+- [x] Aplicar formatCurrency em todos os valores exibidos
+- [x] TypeScript sem erros
