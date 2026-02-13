@@ -728,6 +728,20 @@ Se não conseguir extrair algum campo, use null. Retorne APENAS o JSON válido, 
 
   // Receipt OCR
   receipt: router({
+    uploadImage: protectedProcedure
+      .input(
+        z.object({
+          imageBase64: z.string(),
+          mimeType: z.string(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const { storagePut } = await import("./storage");
+        const buffer = Buffer.from(input.imageBase64, "base64");
+        const fileName = `receipts/${ctx.user.id}/${Date.now()}.jpg`;
+        const { url } = await storagePut(fileName, buffer, input.mimeType);
+        return { url };
+      }),
     extractData: protectedProcedure
       .input(
         z.object({

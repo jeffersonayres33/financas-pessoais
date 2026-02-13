@@ -206,3 +206,11 @@
 - [x] Permitir edição de dados antes de criar despesa
 - [x] Testar OCR com diferentes tipos de recibos
 - [x] Criar checkpoint final
+
+## Fase 23: Correção de Preenchimento Automático de OCR
+- [x] Criar procedure tRPC para upload de imagem em S3
+- [x] Corrigir fluxo de upload usando storagePut
+- [x] Atualizar handleExtractOCR para usar tRPC uploadImage
+- [x] Integrar uploadMutation com extractMutation
+- [x] Testar preenchimento de campos (establishment, data, valor)
+- [x] Validar fluxo completo de OCR

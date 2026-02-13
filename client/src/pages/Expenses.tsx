@@ -108,6 +108,30 @@ export default function Expenses() {
     },
   });
 
+  const uploadMutation = trpc.receipt.uploadImage.useMutation({
+    onSuccess: (data) => {
+      extractMutation.mutate({ imageUrl: data.url });
+    },
+    onError: (error) => {
+      console.error("Erro ao fazer upload:", error);
+      toast.error("Erro ao fazer upload da imagem");
+      setIsExtracting(false);
+    },
+  });
+
+  const extractMutation = trpc.receipt.extractData.useMutation({
+    onSuccess: (data) => {
+      setOcrResult(data);
+      setShowOCRModal(true);
+      setIsExtracting(false);
+    },
+    onError: (error) => {
+      console.error("Erro ao extrair dados:", error);
+      toast.error("Erro ao extrair dados do recibo");
+      setIsExtracting(false);
+    },
+  });
+
   const resetForm = () => {
     setFormData({
       establishment: "",
@@ -128,39 +152,22 @@ export default function Expenses() {
     setOcrImagePreview(preview);
   };
 
-  const extractMutation = trpc.receipt.extractData.useMutation({
-    onSuccess: (data) => {
-      setOcrResult(data);
-      setShowOCRModal(true);
-      setIsExtracting(false);
-    },
-    onError: (error) => {
-      console.error("Erro ao extrair dados:", error);
-      toast.error("Erro ao extrair dados do recibo");
-      setIsExtracting(false);
-    },
-  });
-
   const handleExtractOCR = async (file: File) => {
     setIsExtracting(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      
-      const uploadResponse = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error("Erro ao fazer upload da imagem");
-      }
-
-      const { url } = await uploadResponse.json();
-      extractMutation.mutate({ imageUrl: url });
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64String = reader.result as string;
+        const base64 = base64String.includes(",") ? base64String.split(",")[1] : base64String;
+        uploadMutation.mutate({
+          imageBase64: base64,
+          mimeType: file.type || "image/jpeg",
+        });
+      };
+      reader.readAsDataURL(file);
     } catch (error) {
-      console.error("Erro ao extrair dados:", error);
-      toast.error("Erro ao fazer upload da imagem");
+      console.error("Erro ao processar arquivo:", error);
+      toast.error("Erro ao processar arquivo");
       setIsExtracting(false);
     }
   };
@@ -176,7 +183,6 @@ export default function Expenses() {
       setFormData((prev) => ({ ...prev, purchaseDate: data.date || prev.purchaseDate }));
     }
     if (data.category) {
-      // Find category by name and set it
       const foundCategory = categories?.find(
         (cat) => cat.name.toLowerCase() === data.category?.toLowerCase()
       );
@@ -323,51 +329,37 @@ export default function Expenses() {
           </Select>
           <Select value={filterPaid} onValueChange={setFilterPaid}>
             <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Todos status" />
+              <SelectValue placeholder="Todos" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos status</SelectItem>
-              <SelectItem value="yes">Pagas</SelectItem>
-              <SelectItem value="no">Não pagas</SelectItem>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="yes">Pagos</SelectItem>
+              <SelectItem value="no">Não pagos</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <Card>
           <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Total de Despesas</h3>
-              <p className="text-2xl font-bold text-red-600">{formatCurrency(totalExpenses)}</p>
-            </div>
-
             {isLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-20 bg-muted animate-pulse rounded" />
-                ))}
-              </div>
-            ) : expenses && expenses.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">Nenhuma despesa encontrada neste período</p>
-            ) : (
-              <div className="space-y-3">
-                {expenses?.map((expense) => (
-                  <div
-                    key={expense.expense.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition-colors"
-                  >
+              <div className="text-center py-8 text-muted-foreground">Carregando despesas...</div>
+            ) : expenses && expenses.length > 0 ? (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center pb-4 border-b">
+                  <p className="text-sm font-medium">Total do período</p>
+                  <p className="text-lg font-semibold">{formatCurrency(totalExpenses)}</p>
+                </div>
+                {expenses.map((expense) => (
+                  <div key={expense.expense.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
                     <div className="flex-1">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-4">
                         <Button
                           variant="ghost"
                           size="icon"
-                          className={`h-6 w-6 rounded-full ${
-                            expense.expense.paid === "yes"
-                              ? "bg-green-100 text-green-700 hover:bg-green-200"
-                              : "bg-gray-100 text-gray-400 hover:bg-gray-200"
-                          }`}
                           onClick={() => togglePaid(expense)}
+                          className={expense.expense.paid === "yes" ? "text-green-600" : "text-gray-400"}
                         >
-                          {expense.expense.paid === "yes" ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                          <Check className="h-5 w-5" />
                         </Button>
                         <div>
                           <p className="font-medium">{expense.expense.establishment}</p>
@@ -416,6 +408,8 @@ export default function Expenses() {
                   </div>
                 ))}
               </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">Nenhuma despesa encontrada</div>
             )}
           </CardContent>
         </Card>
