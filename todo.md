@@ -229,3 +229,9 @@
 - [x] Integrar LoadingOverlay no fluxo de OCR
 - [x] Testar transição de telas durante processamento
 - [x] Garantir que overlay desaparece quando OCR termina
+
+## Fase 26: Adicionar Filtro de Categoria em "A Pagar"
+- [x] Adicionar estado para filtro de categoria
+- [x] Adicionar Select de categoria nos filtros
+- [x] Integrar filtro na query de despesas pendentes
+- [x] Testar filtro de categoria

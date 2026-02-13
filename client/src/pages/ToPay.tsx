@@ -24,6 +24,7 @@ export default function ToPay() {
   const [selectedExpenses, setSelectedExpenses] = useState<Set<number>>(new Set());
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [paymentDate, setPaymentDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [filterCategory, setFilterCategory] = useState<string>("all");
 
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
@@ -44,6 +45,7 @@ export default function ToPay() {
       startDate,
       endDate,
       paid: "no",
+      ...(filterCategory !== "all" && { categoryId: Number(filterCategory) }),
     },
     { enabled: !!user?.id }
   );
@@ -174,6 +176,22 @@ export default function ToPay() {
                   {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
                     <option key={month} value={month}>
                       {format(new Date(2024, month - 1), "MMMM", { locale: ptBR })}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex-1 min-w-[180px]">
+                <Label className="text-sm font-medium text-gray-700">Categoria</Label>
+                <select
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                  className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Todas as categorias</option>
+                  {categories?.map((cat) => (
+                    <option key={cat.id} value={cat.id.toString()}>
+                      {cat.name}
                     </option>
                   ))}
                 </select>
