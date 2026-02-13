@@ -221,3 +221,11 @@
 - [x] Reabrir diálogo Nova Despesa com dados preenchidos após confirmar OCR
 - [x] Remover preenchimento automático de categoria (usuário deve selecionar)
 - [x] Testar fluxo completo de OCR com diálogos
+
+## Fase 25: Loading Overlay com Engrenagem Animada
+- [x] Criar componente LoadingOverlay com engrenagem animada
+- [x] Adicionar mensagem "Aguarde..." com animação
+- [x] Implementar fundo escuro semi-transparente
+- [x] Integrar LoadingOverlay no fluxo de OCR
+- [x] Testar transição de telas durante processamento
+- [x] Garantir que overlay desaparece quando OCR termina

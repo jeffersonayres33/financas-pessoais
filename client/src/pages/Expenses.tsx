@@ -3,6 +3,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { ExpenseAttachmentUploadWithOCR } from "@/components/ExpenseAttachmentUploadWithOCR";
 import ReceiptUploader from "@/components/ReceiptUploader";
 import OCRResultModal from "@/components/OCRResultModal";
+import LoadingOverlay from "@/components/LoadingOverlay";
 import { ExtractedReceiptData } from "@/types/receipt";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -529,6 +530,8 @@ export default function Expenses() {
             isLoading={isExtracting}
           />
         )}
+
+        <LoadingOverlay isVisible={isExtracting} message="Processando imagem..." />
       </div>
     </DashboardLayout>
   );
