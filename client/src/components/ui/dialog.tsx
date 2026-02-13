@@ -62,7 +62,12 @@ function DialogTrigger({
 function DialogPortal({
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Portal>) {
-  return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />;
+  // Chrome compatibility: wrap portal to handle cleanup safely
+  return (
+    <div suppressHydrationWarning>
+      <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />
+    </div>
+  );
 }
 
 function DialogClose({

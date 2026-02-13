@@ -168,3 +168,11 @@
 - [x] Mostrar total selecionado na mensagem de seleção
 - [x] Aplicar formatCurrency em todos os valores exibidos
 - [x] TypeScript sem erros
+
+## Fase 19: Correção de Incompatibilidade com Chrome
+- [x] Investigar causa específica do erro no Chrome
+- [x] Implementar guards defensivos em manipulação de DOM
+- [x] Adicionar detecção de navegador e fallbacks
+- [x] Corrigir portais Radix UI para Chrome
+- [x] Adicionar try-catch defensivos em cleanup
+- [x] Testar em Chrome, Firefox e Safari

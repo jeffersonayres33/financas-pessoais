@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
+import BrowserCompat from "@/lib/browser-compat";
 import { Download, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -39,10 +40,10 @@ export function ReportDownloader() {
         link.download = data.fileName;
         document.body.appendChild(link);
         link.click();
-        // Remover link de forma segura
-        if (link.parentNode === document.body) {
-          document.body.removeChild(link);
-        }
+        // Remover link de forma segura com compatibilidade Chrome
+        BrowserCompat.deferDOMOperation(() => {
+          BrowserCompat.safeRemoveElement(link);
+        });
         window.URL.revokeObjectURL(url);
 
         toast.success("Relatório baixado com sucesso!");
@@ -72,10 +73,10 @@ export function ReportDownloader() {
         link.download = data.fileName;
         document.body.appendChild(link);
         link.click();
-        // Remover link de forma segura
-        if (link.parentNode === document.body) {
-          document.body.removeChild(link);
-        }
+        // Remover link de forma segura com compatibilidade Chrome
+        BrowserCompat.deferDOMOperation(() => {
+          BrowserCompat.safeRemoveElement(link);
+        });
         window.URL.revokeObjectURL(url);
 
         toast.success("Relatório baixado com sucesso!");
