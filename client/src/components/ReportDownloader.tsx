@@ -39,10 +39,9 @@ export function ReportDownloader() {
         link.download = data.fileName;
         document.body.appendChild(link);
         link.click();
-        try {
+        // Remover link de forma segura
+        if (link.parentNode === document.body) {
           document.body.removeChild(link);
-        } catch (e) {
-          // Link já foi removido ou não está mais no DOM
         }
         window.URL.revokeObjectURL(url);
 
@@ -73,10 +72,9 @@ export function ReportDownloader() {
         link.download = data.fileName;
         document.body.appendChild(link);
         link.click();
-        try {
+        // Remover link de forma segura
+        if (link.parentNode === document.body) {
           document.body.removeChild(link);
-        } catch (e) {
-          // Link já foi removido ou não está mais no DOM
         }
         window.URL.revokeObjectURL(url);
 

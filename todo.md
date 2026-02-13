@@ -150,3 +150,13 @@
 - [x] Adicionar indicador visual do período selecionado
 - [x] Testar filtro com diferentes períodos
 - [x] Criar checkpoint final
+
+## Fase 17: Correção de Bugs em Produção
+- [x] Investigar erro de removeChild em produção
+- [x] Adicionar guard seguro para removeChild no ReportDownloader
+- [x] Verificar manipulação de DOM em todos os componentes
+- [x] Adicionar meta tags de cache busting no index.html
+- [x] Verificar versões de React e Radix UI (todas alinhadas em 19.2.1)
+- [x] Confirmar que "A Pagar" está correto no código-fonte
+- [x] Testes passando (16 testes)
+- [x] Build concluído com sucesso
