@@ -154,6 +154,7 @@ export default function Expenses() {
 
   const handleExtractOCR = async (file: File) => {
     setIsExtracting(true);
+    setIsDialogOpen(false);
     try {
       const reader = new FileReader();
       reader.onload = () => {
@@ -169,6 +170,7 @@ export default function Expenses() {
       console.error("Erro ao processar arquivo:", error);
       toast.error("Erro ao processar arquivo");
       setIsExtracting(false);
+      setIsDialogOpen(true);
     }
   };
 
@@ -182,16 +184,9 @@ export default function Expenses() {
     if (data.date) {
       setFormData((prev) => ({ ...prev, purchaseDate: data.date || prev.purchaseDate }));
     }
-    if (data.category) {
-      const foundCategory = categories?.find(
-        (cat) => cat.name.toLowerCase() === data.category?.toLowerCase()
-      );
-      if (foundCategory) {
-        setFormData((prev) => ({ ...prev, categoryId: foundCategory.id.toString() }));
-      }
-    }
     setShowOCRModal(false);
     setOcrResult(null);
+    setIsDialogOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {

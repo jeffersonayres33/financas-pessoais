@@ -214,3 +214,10 @@
 - [x] Integrar uploadMutation com extractMutation
 - [x] Testar preenchimento de campos (establishment, data, valor)
 - [x] Validar fluxo completo de OCR
+
+## Fase 24: Melhorias de UX no Fluxo de OCR
+- [x] Aumentar Z-index do modal OCR para aparecer por cima do diálogo Nova Despesa
+- [x] Fechar diálogo Nova Despesa quando modal OCR abre
+- [x] Reabrir diálogo Nova Despesa com dados preenchidos após confirmar OCR
+- [x] Remover preenchimento automático de categoria (usuário deve selecionar)
+- [x] Testar fluxo completo de OCR com diálogos
