@@ -194,3 +194,15 @@
 - [x] Integrar logging automático no ErrorBoundary
 - [x] Adicionar link no menu lateral (admin only)
 - [x] Testar rastreamento de erros
+
+## Fase 22: Fluxo Completo de OCR para Notas Fiscais e Recibos
+- [x] Criar componente de upload de imagem com preview
+- [x] Implementar validação de tipo de arquivo (apenas imagens)
+- [x] Criar procedure tRPC para OCR com LLM
+- [x] Implementar extração de valor, data, estabelecimento, categoria
+- [x] Criar modal de visualização de dados extraídos
+- [x] Adicionar botão "Concluir" para preencher formulário
+- [x] Integrar dados no formulário de Nova Despesa
+- [x] Permitir edição de dados antes de criar despesa
+- [x] Testar OCR com diferentes tipos de recibos
+- [x] Criar checkpoint final

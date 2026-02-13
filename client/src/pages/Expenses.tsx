@@ -1,6 +1,9 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { ExpenseAttachmentUploadWithOCR } from "@/components/ExpenseAttachmentUploadWithOCR";
+import ReceiptUploader from "@/components/ReceiptUploader";
+import OCRResultModal from "@/components/OCRResultModal";
+import { ExtractedReceiptData } from "@/types/receipt";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -27,6 +30,10 @@ export default function Expenses() {
   const [editingExpense, setEditingExpense] = useState<any>(null);
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterPaid, setFilterPaid] = useState<string>("all");
+  const [showOCRModal, setShowOCRModal] = useState(false);
+  const [ocrResult, setOcrResult] = useState<ExtractedReceiptData | null>(null);
+  const [ocrImagePreview, setOcrImagePreview] = useState<string>("");
+  const [isExtracting, setIsExtracting] = useState(false);
   
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
@@ -112,6 +119,73 @@ export default function Expenses() {
     });
     setEditingExpense(null);
     setIsDialogOpen(false);
+    setShowOCRModal(false);
+    setOcrResult(null);
+    setOcrImagePreview("");
+  };
+
+  const handleReceiptImageSelected = async (file: File, preview: string) => {
+    setOcrImagePreview(preview);
+  };
+
+  const extractMutation = trpc.receipt.extractData.useMutation({
+    onSuccess: (data) => {
+      setOcrResult(data);
+      setShowOCRModal(true);
+      setIsExtracting(false);
+    },
+    onError: (error) => {
+      console.error("Erro ao extrair dados:", error);
+      toast.error("Erro ao extrair dados do recibo");
+      setIsExtracting(false);
+    },
+  });
+
+  const handleExtractOCR = async (file: File) => {
+    setIsExtracting(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      
+      const uploadResponse = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("Erro ao fazer upload da imagem");
+      }
+
+      const { url } = await uploadResponse.json();
+      extractMutation.mutate({ imageUrl: url });
+    } catch (error) {
+      console.error("Erro ao extrair dados:", error);
+      toast.error("Erro ao fazer upload da imagem");
+      setIsExtracting(false);
+    }
+  };
+
+  const handleOCRConclude = (data: ExtractedReceiptData) => {
+    if (data.establishment) {
+      setFormData((prev) => ({ ...prev, establishment: data.establishment || "" }));
+    }
+    if (data.value) {
+      setFormData((prev) => ({ ...prev, amount: data.value!.toFixed(2) }));
+    }
+    if (data.date) {
+      setFormData((prev) => ({ ...prev, purchaseDate: data.date || prev.purchaseDate }));
+    }
+    if (data.category) {
+      // Find category by name and set it
+      const foundCategory = categories?.find(
+        (cat) => cat.name.toLowerCase() === data.category?.toLowerCase()
+      );
+      if (foundCategory) {
+        setFormData((prev) => ({ ...prev, categoryId: foundCategory.id.toString() }));
+      }
+    }
+    setShowOCRModal(false);
+    setOcrResult(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -356,6 +430,13 @@ export default function Expenses() {
             </DialogHeader>
             <form onSubmit={handleSubmit}>
               <div className="space-y-4 py-4">
+                {!editingExpense && (
+                  <ReceiptUploader
+                    onImageSelected={handleReceiptImageSelected}
+                    onExtract={handleExtractOCR}
+                    isExtracting={isExtracting}
+                  />
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="establishment">Estabelecimento</Label>
                   <Input
@@ -446,6 +527,19 @@ export default function Expenses() {
             </form>
           </DialogContent>
         </Dialog>
+
+        {showOCRModal && ocrResult && (
+          <OCRResultModal
+            data={ocrResult}
+            imagePreview={ocrImagePreview}
+            onConclude={handleOCRConclude}
+            onCancel={() => {
+              setShowOCRModal(false);
+              setOcrResult(null);
+            }}
+            isLoading={isExtracting}
+          />
+        )}
       </div>
     </DashboardLayout>
   );

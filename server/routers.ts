@@ -725,5 +725,19 @@ Se não conseguir extrair algum campo, use null. Retorne APENAS o JSON válido, 
         return { success: true };
       }),
   }),
+
+  // Receipt OCR
+  receipt: router({
+    extractData: protectedProcedure
+      .input(
+        z.object({
+          imageUrl: z.string().url(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { extractReceiptData } = await import("./receipt-ocr");
+        return extractReceiptData(input.imageUrl);
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;
