@@ -52,6 +52,8 @@ export const expenses = mysqlTable("expenses", {
   amount: int("amount").notNull(), // valor em centavos
   paid: mysqlEnum("paid", ["yes", "no"]).notNull().default("no"),
   paymentDate: timestamp("payment_date"),
+  totalInstallments: int("total_installments").notNull().default(1),
+  currentInstallment: int("current_installment").notNull().default(1),
   userId: int("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),

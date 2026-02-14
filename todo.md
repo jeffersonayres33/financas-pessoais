@@ -244,3 +244,11 @@
 - [x] Adicionar validação de número de parcelas
 - [x] Exibir preview de parcelas antes de criar
 - [x] Testar fluxo completo de parcelas
+
+## Fase 28: Correções de Sistema de Parcelas
+- [x] Adicionar campos totalInstallments e currentInstallment no banco de dados
+- [x] Corrigir lógica de criação de parcelas futuras
+- [x] Adicionar etiqueta "parcelado X/Y" na interface
+- [x] Adicionar scroll no diálogo de Nova Despesa
+- [x] Testar criação de parcelas nos meses subsequentes
+- [x] Testar exibição de etiqueta de parcelas

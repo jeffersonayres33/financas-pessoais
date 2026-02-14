@@ -36,6 +36,13 @@
       "when": 1770992599902,
       "tag": "0004_tricky_exiles",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1771038648862,
+      "tag": "0005_magenta_kitty_pryde",
+      "breakpoints": true
     }
   ]
 }

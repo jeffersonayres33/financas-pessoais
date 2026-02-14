@@ -95,6 +95,8 @@ export const appRouter = router({
           amount: z.number().int().min(0),
           paid: z.enum(["yes", "no"]),
           paymentDate: z.date().optional(),
+          totalInstallments: z.number().int().min(1).default(1),
+          currentInstallment: z.number().int().min(1).default(1),
         })
       )
       .mutation(async ({ ctx, input }) => {
@@ -116,6 +118,8 @@ export const appRouter = router({
           amount: z.number().int().min(0).optional(),
           paid: z.enum(["yes", "no"]).optional(),
           paymentDate: z.date().optional().nullable(),
+          totalInstallments: z.number().int().min(1).optional(),
+          currentInstallment: z.number().int().min(1).optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {

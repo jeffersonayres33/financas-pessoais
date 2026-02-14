@@ -206,9 +206,20 @@ export default function Expenses() {
     };
 
     if (editingExpense) {
-      updateMutation.mutate({ id: editingExpense.expense.id, ...data });
+      updateMutation.mutate({ id: editingExpense.expense.id, ...data, purchaseDate: new Date(formData.purchaseDate), totalInstallments: formData.installments || 1, currentInstallment: 1 });
     } else {
-      createMutation.mutate(data);
+      const startDate = new Date(formData.purchaseDate);
+      const installments = formData.installments || 1;
+      for (let i = 0; i < installments; i++) {
+        const expenseDate = new Date(startDate);
+        expenseDate.setMonth(expenseDate.getMonth() + i);
+        createMutation.mutate({
+          ...data,
+          purchaseDate: expenseDate,
+          totalInstallments: installments,
+          currentInstallment: i + 1,
+        });
+      }
     }
   };
 
@@ -361,7 +372,14 @@ export default function Expenses() {
                           <Check className="h-5 w-5" />
                         </Button>
                         <div>
-                          <p className="font-medium">{expense.expense.establishment}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">{expense.expense.establishment}</p>
+                            {expense.expense.totalInstallments > 1 && (
+                              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                parcelado {expense.expense.currentInstallment}/{expense.expense.totalInstallments}
+                              </span>
+                            )}
+                          </div>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <span>{expense.category?.name}</span>
                             <span>•</span>
@@ -414,7 +432,7 @@ export default function Expenses() {
         </Card>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingExpense ? "Editar Despesa" : "Nova Despesa"}</DialogTitle>
               <DialogDescription>
