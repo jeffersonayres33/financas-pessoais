@@ -25,6 +25,7 @@ export default function Incomes() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingIncome, setEditingIncome] = useState<any>(null);
   const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("date-new");
   
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
@@ -150,6 +151,18 @@ export default function Incomes() {
     return incomes?.reduce((sum, inc) => sum + inc.income.amount, 0) || 0;
   }, [incomes]);
 
+  const sortedIncomes = useMemo(() => {
+    if (!incomes) return [];
+    const sorted = [...incomes];
+    if (sortBy === "date-new") return sorted.sort((a, b) => new Date(b.income.date).getTime() - new Date(a.income.date).getTime());
+    if (sortBy === "date-old") return sorted.sort((a, b) => new Date(a.income.date).getTime() - new Date(b.income.date).getTime());
+    if (sortBy === "alpha-az") return sorted.sort((a, b) => a.income.description.localeCompare(b.income.description));
+    if (sortBy === "alpha-za") return sorted.sort((a, b) => b.income.description.localeCompare(a.income.description));
+    if (sortBy === "value-asc") return sorted.sort((a, b) => a.income.amount - b.income.amount);
+    if (sortBy === "value-desc") return sorted.sort((a, b) => b.income.amount - a.income.amount);
+    return sorted;
+  }, [incomes, sortBy]);
+
   const months = [
     { value: 1, label: "Janeiro" },
     { value: 2, label: "Fevereiro" },
@@ -222,6 +235,19 @@ export default function Incomes() {
               ))}
             </SelectContent>
           </Select>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Ordenar por" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="date-new">Data: Mais Novo</SelectItem>
+              <SelectItem value="date-old">Data: Mais Velho</SelectItem>
+              <SelectItem value="alpha-az">Alfabético: A-Z</SelectItem>
+              <SelectItem value="alpha-za">Alfabético: Z-A</SelectItem>
+              <SelectItem value="value-asc">Valor: Menor para Maior</SelectItem>
+              <SelectItem value="value-desc">Valor: Maior para Menor</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <Card>
@@ -241,7 +267,7 @@ export default function Incomes() {
               <p className="text-muted-foreground text-center py-8">Nenhuma receita encontrada neste período</p>
             ) : (
               <div className="space-y-3">
-                {incomes?.map((income) => (
+                {sortedIncomes?.map((income) => (
                   <div
                     key={income.income.id}
                     className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition-colors"

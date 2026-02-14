@@ -261,3 +261,11 @@
 - [x] Remover botão "Fotos" da interface de Despesas
 - [x] Manter apenas botões "Editar" e "Deletar"
 - [x] Testar interface e validar layout
+
+## Fase 31: Implementar Sistema de Ordenação em Todas as Seções
+- [x] Adicionar filtro de ordenação em Despesas (data/alfabética/valor)
+- [x] Adicionar filtro de ordenação em A Pagar (data/alfabética/valor)
+- [x] Adicionar filtro de ordenação em Receitas (data/alfabética/valor)
+- [x] Adicionar filtro de ordenação em Categorias (data/alfabética/valor)
+- [x] Testar todas as ordenações
+- [x] Validar interface e UX

@@ -25,6 +25,7 @@ export default function ToPay() {
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [paymentDate, setPaymentDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("date-new");
 
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
@@ -151,6 +152,18 @@ export default function ToPay() {
       .reduce((sum, item) => sum + item.expense.amount, 0);
   }, [selectedExpenses, unpaidExpenses]);
 
+  const sortedExpenses = useMemo(() => {
+    if (!unpaidExpenses) return [];
+    const sorted = [...unpaidExpenses];
+    if (sortBy === "date-new") return sorted.sort((a, b) => new Date(b.expense.purchaseDate).getTime() - new Date(a.expense.purchaseDate).getTime());
+    if (sortBy === "date-old") return sorted.sort((a, b) => new Date(a.expense.purchaseDate).getTime() - new Date(b.expense.purchaseDate).getTime());
+    if (sortBy === "alpha-az") return sorted.sort((a, b) => a.expense.establishment.localeCompare(b.expense.establishment));
+    if (sortBy === "alpha-za") return sorted.sort((a, b) => b.expense.establishment.localeCompare(a.expense.establishment));
+    if (sortBy === "value-asc") return sorted.sort((a, b) => a.expense.amount - b.expense.amount);
+    if (sortBy === "value-desc") return sorted.sort((a, b) => b.expense.amount - a.expense.amount);
+    return sorted;
+  }, [unpaidExpenses, sortBy]);
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -209,6 +222,22 @@ export default function ToPay() {
                       {year}
                     </option>
                   ))}
+                </select>
+              </div>
+
+              <div className="flex-1 min-w-[200px]">
+                <Label className="text-sm font-medium text-gray-700">Ordenar por</Label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="date-new">Data: Mais Novo</option>
+                  <option value="date-old">Data: Mais Velho</option>
+                  <option value="alpha-az">Alfabético: A-Z</option>
+                  <option value="alpha-za">Alfabético: Z-A</option>
+                  <option value="value-asc">Valor: Menor para Maior</option>
+                  <option value="value-desc">Valor: Maior para Menor</option>
                 </select>
               </div>
 
@@ -287,7 +316,7 @@ export default function ToPay() {
               </Card>
 
               {/* Lista de Despesas */}
-              {unpaidExpenses.map((item) => {
+              {sortedExpenses.map((item) => {
                 const expense = item.expense;
                 return (
                 <Card

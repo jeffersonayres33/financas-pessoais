@@ -15,13 +15,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 export default function Categories() {
   const { user } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
+  const [sortBy, setSortBy] = useState<string>("date-new");
   const [formData, setFormData] = useState({
     name: "",
     type: "expense" as "expense" | "income",
@@ -30,6 +31,18 @@ export default function Categories() {
 
   const { data: categories, isLoading } = trpc.categories.list.useQuery(undefined, { enabled: !!user });
   const utils = trpc.useUtils();
+
+  const sortedCategories = useMemo(() => {
+    if (!categories) return [];
+    const sorted = [...categories];
+    if (sortBy === "date-new") return sorted.reverse();
+    if (sortBy === "date-old") return sorted;
+    if (sortBy === "alpha-az") return sorted.sort((a, b) => a.name.localeCompare(b.name));
+    if (sortBy === "alpha-za") return sorted.sort((a, b) => b.name.localeCompare(a.name));
+    if (sortBy === "value-asc") return sorted.sort((a, b) => a.monthlyBudget - b.monthlyBudget);
+    if (sortBy === "value-desc") return sorted.sort((a, b) => b.monthlyBudget - a.monthlyBudget);
+    return sorted;
+  }, [categories, sortBy]);
 
   const createMutation = trpc.categories.create.useMutation({
     onSuccess: () => {
@@ -111,17 +124,31 @@ export default function Categories() {
     }).format(cents / 100);
   };
 
-  const expenseCategories = categories?.filter((c) => c.type === "expense") || [];
-  const incomeCategories = categories?.filter((c) => c.type === "income") || [];
+  const expenseCategories = sortedCategories?.filter((c) => c.type === "expense") || [];
+  const incomeCategories = sortedCategories?.filter((c) => c.type === "income") || [];
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Categorias</h1>
-            <p className="text-muted-foreground">Gerencie suas categorias de despesas e receitas</p>
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Categorias</h1>
+          <p className="text-muted-foreground">Gerencie suas categorias de despesas e receitas</p>
+        </div>
+
+        <div className="flex gap-4 items-end">
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Ordenar por" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="date-new">Data: Mais Novo</SelectItem>
+              <SelectItem value="date-old">Data: Mais Velho</SelectItem>
+              <SelectItem value="alpha-az">Alfabético: A-Z</SelectItem>
+              <SelectItem value="alpha-za">Alfabético: Z-A</SelectItem>
+              <SelectItem value="value-asc">Orçamento: Menor para Maior</SelectItem>
+              <SelectItem value="value-desc">Orçamento: Maior para Menor</SelectItem>
+            </SelectContent>
+          </Select>
           <Button onClick={() => setIsDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Nova Categoria

@@ -31,6 +31,7 @@ export default function Expenses() {
   const [editingExpense, setEditingExpense] = useState<any>(null);
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterPaid, setFilterPaid] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("date-new");
   const [showOCRModal, setShowOCRModal] = useState(false);
   const [ocrResult, setOcrResult] = useState<ExtractedReceiptData | null>(null);
   const [ocrImagePreview, setOcrImagePreview] = useState<string>("");
@@ -265,6 +266,18 @@ export default function Expenses() {
     return expenses?.reduce((sum, exp) => sum + exp.expense.amount, 0) || 0;
   }, [expenses]);
 
+  const sortedExpenses = useMemo(() => {
+    if (!expenses) return [];
+    const sorted = [...expenses];
+    if (sortBy === "date-new") return sorted.sort((a, b) => new Date(b.expense.purchaseDate).getTime() - new Date(a.expense.purchaseDate).getTime());
+    if (sortBy === "date-old") return sorted.sort((a, b) => new Date(a.expense.purchaseDate).getTime() - new Date(b.expense.purchaseDate).getTime());
+    if (sortBy === "alpha-az") return sorted.sort((a, b) => a.expense.establishment.localeCompare(b.expense.establishment));
+    if (sortBy === "alpha-za") return sorted.sort((a, b) => b.expense.establishment.localeCompare(a.expense.establishment));
+    if (sortBy === "value-asc") return sorted.sort((a, b) => a.expense.amount - b.expense.amount);
+    if (sortBy === "value-desc") return sorted.sort((a, b) => b.expense.amount - a.expense.amount);
+    return sorted;
+  }, [expenses, sortBy]);
+
   const months = [
     { value: 1, label: "Janeiro" },
     { value: 2, label: "Fevereiro" },
@@ -347,6 +360,19 @@ export default function Expenses() {
               <SelectItem value="no">Não pagos</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Ordenar por" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="date-new">Data: Mais Novo</SelectItem>
+              <SelectItem value="date-old">Data: Mais Velho</SelectItem>
+              <SelectItem value="alpha-az">Alfabético: A-Z</SelectItem>
+              <SelectItem value="alpha-za">Alfabético: Z-A</SelectItem>
+              <SelectItem value="value-asc">Valor: Menor para Maior</SelectItem>
+              <SelectItem value="value-desc">Valor: Maior para Menor</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <Card>
@@ -359,7 +385,7 @@ export default function Expenses() {
                   <p className="text-sm font-medium">Total do período</p>
                   <p className="text-lg font-semibold">{formatCurrency(totalExpenses)}</p>
                 </div>
-                {expenses.map((expense) => (
+                {sortedExpenses.map((expense) => (
                   <div key={expense.expense.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
                     <div className="flex-1">
                       <div className="flex items-center gap-4">
