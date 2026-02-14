@@ -32,6 +32,7 @@ export default function Expenses() {
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterPaid, setFilterPaid] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("date-new");
+  const [filterInstallments, setFilterInstallments] = useState<string>("all");
   const [showOCRModal, setShowOCRModal] = useState(false);
   const [ocrResult, setOcrResult] = useState<ExtractedReceiptData | null>(null);
   const [ocrImagePreview, setOcrImagePreview] = useState<string>("");
@@ -268,7 +269,13 @@ export default function Expenses() {
 
   const sortedExpenses = useMemo(() => {
     if (!expenses) return [];
-    const sorted = [...expenses];
+    let sorted = [...expenses];
+    
+    if (filterInstallments === "installments") {
+      sorted = sorted.filter((e) => e.expense.totalInstallments > 1);
+    } else if (filterInstallments === "no-installments") {
+      sorted = sorted.filter((e) => e.expense.totalInstallments === 1);
+    }
     if (sortBy === "date-new") return sorted.sort((a, b) => new Date(b.expense.purchaseDate).getTime() - new Date(a.expense.purchaseDate).getTime());
     if (sortBy === "date-old") return sorted.sort((a, b) => new Date(a.expense.purchaseDate).getTime() - new Date(b.expense.purchaseDate).getTime());
     if (sortBy === "alpha-az") return sorted.sort((a, b) => a.expense.establishment.localeCompare(b.expense.establishment));
@@ -276,7 +283,7 @@ export default function Expenses() {
     if (sortBy === "value-asc") return sorted.sort((a, b) => a.expense.amount - b.expense.amount);
     if (sortBy === "value-desc") return sorted.sort((a, b) => b.expense.amount - a.expense.amount);
     return sorted;
-  }, [expenses, sortBy]);
+  }, [expenses, sortBy, filterInstallments]);
 
   const months = [
     { value: 1, label: "Janeiro" },
@@ -352,12 +359,22 @@ export default function Expenses() {
           </Select>
           <Select value={filterPaid} onValueChange={setFilterPaid}>
             <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Todos" />
+              <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
               <SelectItem value="yes">Pagos</SelectItem>
               <SelectItem value="no">Não pagos</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterInstallments} onValueChange={setFilterInstallments}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Parcelados" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="installments">Parcelados</SelectItem>
+              <SelectItem value="no-installments">Não Parcelados</SelectItem>
             </SelectContent>
           </Select>
           <Select value={sortBy} onValueChange={setSortBy}>

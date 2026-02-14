@@ -26,6 +26,7 @@ export default function ToPay() {
   const [paymentDate, setPaymentDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("date-new");
+  const [filterInstallments, setFilterInstallments] = useState<string>("all");
 
   const currentDate = new Date();
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
@@ -154,7 +155,13 @@ export default function ToPay() {
 
   const sortedExpenses = useMemo(() => {
     if (!unpaidExpenses) return [];
-    const sorted = [...unpaidExpenses];
+    let sorted = [...unpaidExpenses];
+    
+    if (filterInstallments === "installments") {
+      sorted = sorted.filter((e) => e.expense.totalInstallments > 1);
+    } else if (filterInstallments === "no-installments") {
+      sorted = sorted.filter((e) => e.expense.totalInstallments === 1);
+    }
     if (sortBy === "date-new") return sorted.sort((a, b) => new Date(b.expense.purchaseDate).getTime() - new Date(a.expense.purchaseDate).getTime());
     if (sortBy === "date-old") return sorted.sort((a, b) => new Date(a.expense.purchaseDate).getTime() - new Date(b.expense.purchaseDate).getTime());
     if (sortBy === "alpha-az") return sorted.sort((a, b) => a.expense.establishment.localeCompare(b.expense.establishment));
@@ -162,7 +169,7 @@ export default function ToPay() {
     if (sortBy === "value-asc") return sorted.sort((a, b) => a.expense.amount - b.expense.amount);
     if (sortBy === "value-desc") return sorted.sort((a, b) => b.expense.amount - a.expense.amount);
     return sorted;
-  }, [unpaidExpenses, sortBy]);
+  }, [unpaidExpenses, sortBy, filterInstallments]);
 
   return (
     <DashboardLayout>
@@ -222,6 +229,19 @@ export default function ToPay() {
                       {year}
                     </option>
                   ))}
+                </select>
+              </div>
+
+              <div className="flex-1 min-w-[150px]">
+                <Label className="text-sm font-medium text-gray-700">Parcelados</Label>
+                <select
+                  value={filterInstallments}
+                  onChange={(e) => setFilterInstallments(e.target.value)}
+                  className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Todos</option>
+                  <option value="installments">Parcelados</option>
+                  <option value="no-installments">Não Parcelados</option>
                 </select>
               </div>
 

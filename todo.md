@@ -269,3 +269,10 @@
 - [x] Adicionar filtro de ordenação em Categorias (data/alfabética/valor)
 - [x] Testar todas as ordenações
 - [x] Validar interface e UX
+
+## Fase 32: Implementar Filtro de Parcelados em Despesas e A Pagar
+- [x] Adicionar filtro de parcelados em Expenses (Todos/Parcelados/Não Parcelados)
+- [x] Reordenar filtros em Expenses (Mês, Ano, Categorias, Status, Parcelados, Ordenado por)
+- [x] Adicionar filtro de parcelados em ToPay (Todos/Parcelados/Não Parcelados)
+- [x] Reordenar filtros em ToPay (Mês, Ano, Categoria, Parcelados, Ordenado por)
+- [x] Testar filtros e validar interface
