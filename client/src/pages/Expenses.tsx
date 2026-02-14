@@ -153,7 +153,7 @@ export default function Expenses() {
             <h1 className="text-3xl font-bold text-gray-900">Despesas</h1>
             <p className="text-gray-600 mt-1">Gerencie suas despesas e acompanhe gastos</p>
           </div>
-          <Button className="gap-2 w-full sm:w-auto">
+          <Button onClick={() => setIsDialogOpen(true)} className="gap-2 w-full sm:w-auto">
             <Plus className="w-4 h-4" />
             Nova Despesa
           </Button>

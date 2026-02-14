@@ -46,6 +46,7 @@
 - [x] Adicionar sugestões de otimização de orçamento via LLM
 - [x] Implementar detecção de despesas anômalas via LLM
 - [x] Adicionar histórico de notificações enviadas
+
 ## Fase 7: Testes e Finalização
 - [x] Escrever testes unitários para procedures principais
 - [x] Testar fluxo completo de cadastro e visualização de dados
@@ -242,16 +243,11 @@
 - [x] Distribuir valor igualmente entre parcelas
 - [x] Calcular datas automaticamente para cada parcela
 - [x] Adicionar validação de número de parcelas
-- [x] Exibir preview de parcelas antes de criar
-- [x] Testar fluxo completo de parcelas
 
-## Fase 28: Correções de Sistema de Parcelas
-- [x] Adicionar campos totalInstallments e currentInstallment no banco de dados
-- [x] Corrigir lógica de criação de parcelas futuras
-- [x] Adicionar etiqueta "parcelado X/Y" na interface
-- [x] Adicionar scroll no diálogo de Nova Despesa
-- [x] Testar criação de parcelas nos meses subsequentes
-- [x] Testar exibição de etiqueta de parcelas
+## Fase 28: Etiquetas de Parcelas em Despesas
+- [x] Adicionar etiqueta "parcelado X/Y" em Expenses.tsx
+- [x] Exibir etiqueta com badge azul ao lado do estabelecimento
+- [x] Testar exibição de etiquetas em despesas parceladas
 
 ## Fase 29: Adicionar Etiquetas de Parcelas em "A Pagar"
 - [x] Adicionar etiqueta "parcelado X/Y" em ToPay.tsx
@@ -294,3 +290,8 @@
 - [x] Reformular filtros em Categories.tsx (rótulos, Card, botão Filtrar)
 - [x] Melhorar responsividade de Categories.tsx
 - [x] Testar layout responsivo em ambas as seções
+
+## Fase 36: Corrigir Botão "Nova Despesa" em Expenses
+- [x] Identificar o problema no botão Nova Despesa
+- [x] Corrigir funcionalidade do botão
+- [x] Testar abertura do diálogo
