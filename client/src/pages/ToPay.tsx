@@ -144,24 +144,29 @@ export default function ToPay() {
     }).format(cents / 100);
   };
 
-  const totalUnpaid = unpaidExpenses?.reduce((sum, e) => sum + e.expense.amount, 0) || 0;
+  const filteredExpenses = useMemo(() => {
+    if (!unpaidExpenses) return [];
+    let filtered = [...unpaidExpenses];
+    if (filterInstallments === "installments") {
+      filtered = filtered.filter((e) => e.expense.totalInstallments > 1);
+    } else if (filterInstallments === "no-installments") {
+      filtered = filtered.filter((e) => e.expense.totalInstallments === 1);
+    }
+    return filtered;
+  }, [unpaidExpenses, filterInstallments]);
+
+  const totalUnpaid = filteredExpenses?.reduce((sum, e) => sum + e.expense.amount, 0) || 0;
   
   const totalSelected = useMemo(() => {
-    if (!unpaidExpenses) return 0;
-    return unpaidExpenses
+    if (!filteredExpenses) return 0;
+    return filteredExpenses
       .filter((item) => selectedExpenses.has(item.expense.id))
       .reduce((sum, item) => sum + item.expense.amount, 0);
-  }, [selectedExpenses, unpaidExpenses]);
+  }, [selectedExpenses, filteredExpenses]);
 
   const sortedExpenses = useMemo(() => {
-    if (!unpaidExpenses) return [];
-    let sorted = [...unpaidExpenses];
-    
-    if (filterInstallments === "installments") {
-      sorted = sorted.filter((e) => e.expense.totalInstallments > 1);
-    } else if (filterInstallments === "no-installments") {
-      sorted = sorted.filter((e) => e.expense.totalInstallments === 1);
-    }
+    if (!filteredExpenses) return [];
+    let sorted = [...filteredExpenses];
     if (sortBy === "date-new") return sorted.sort((a, b) => new Date(b.expense.purchaseDate).getTime() - new Date(a.expense.purchaseDate).getTime());
     if (sortBy === "date-old") return sorted.sort((a, b) => new Date(a.expense.purchaseDate).getTime() - new Date(b.expense.purchaseDate).getTime());
     if (sortBy === "alpha-az") return sorted.sort((a, b) => a.expense.establishment.localeCompare(b.expense.establishment));
@@ -169,7 +174,7 @@ export default function ToPay() {
     if (sortBy === "value-asc") return sorted.sort((a, b) => a.expense.amount - b.expense.amount);
     if (sortBy === "value-desc") return sorted.sort((a, b) => b.expense.amount - a.expense.amount);
     return sorted;
-  }, [unpaidExpenses, sortBy, filterInstallments]);
+  }, [filteredExpenses, sortBy]);
 
   return (
     <DashboardLayout>

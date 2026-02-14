@@ -276,3 +276,8 @@
 - [x] Adicionar filtro de parcelados em ToPay (Todos/Parcelados/Não Parcelados)
 - [x] Reordenar filtros em ToPay (Mês, Ano, Categoria, Parcelados, Ordenado por)
 - [x] Testar filtros e validar interface
+
+## Fase 33: Corrigir Resumo de Pagamentos em A Pagar
+- [x] Atualizar cálculo de totalUnpaid para respeitar filtro de parcelados
+- [x] Atualizar cálculo de totalSelected para respeitar filtro de parcelados
+- [x] Testar Resumo de Pagamentos com filtro de parcelados
