@@ -47,6 +47,7 @@ export default function Expenses() {
     amount: "",
     paid: "no" as "yes" | "no",
     paymentDate: "",
+    installments: 1,
   });
 
   const startDate = useMemo(
@@ -141,6 +142,7 @@ export default function Expenses() {
       amount: "",
       paid: "no",
       paymentDate: "",
+      installments: 1,
     });
     setEditingExpense(null);
     setIsDialogOpen(false);
@@ -221,6 +223,7 @@ export default function Expenses() {
       paymentDate: expense.expense.paymentDate
         ? format(new Date(expense.expense.paymentDate), "yyyy-MM-dd")
         : "",
+      installments: 1,
     });
     setIsDialogOpen(true);
   };
@@ -479,6 +482,25 @@ export default function Expenses() {
                     required
                   />
                 </div>
+                {!editingExpense && (
+                  <div className="space-y-2">
+                    <Label htmlFor="installments">Parcelas</Label>
+                    <Input
+                      id="installments"
+                      type="number"
+                      min="1"
+                      max="12"
+                      value={formData.installments}
+                      onChange={(e) => setFormData({ ...formData, installments: parseInt(e.target.value) || 1 })}
+                      placeholder="1"
+                    />
+                    {formData.installments > 1 && (
+                      <p className="text-sm text-muted-foreground">
+                        Será criada {formData.installments} despesa(s)
+                      </p>
+                    )}
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="paid">Status de Pagamento</Label>
                   <Select

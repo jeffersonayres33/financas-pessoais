@@ -235,3 +235,12 @@
 - [x] Adicionar Select de categoria nos filtros
 - [x] Integrar filtro na query de despesas pendentes
 - [x] Testar filtro de categoria
+
+## Fase 27: Campo de Parcelas em Nova Despesa
+- [x] Adicionar campo de parcelas no formulário
+- [x] Implementar lógica de criação de despesas parceladas
+- [x] Distribuir valor igualmente entre parcelas
+- [x] Calcular datas automaticamente para cada parcela
+- [x] Adicionar validação de número de parcelas
+- [x] Exibir preview de parcelas antes de criar
+- [x] Testar fluxo completo de parcelas
