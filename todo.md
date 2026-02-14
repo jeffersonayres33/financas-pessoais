@@ -295,3 +295,9 @@
 - [x] Identificar o problema no botão Nova Despesa
 - [x] Corrigir funcionalidade do botão
 - [x] Testar abertura do diálogo
+
+## Fase 37: Corrigir Botão Nova Despesa e Campos de Edição
+- [x] Corrigir botão Nova Despesa para não abrir modo edição
+- [x] Adicionar campos data, status de pagamento e data do pagamento no diálogo
+- [x] Testar criação de nova despesa
+- [x] Testar edição com todos os campos

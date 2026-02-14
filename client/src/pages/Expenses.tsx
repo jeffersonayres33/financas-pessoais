@@ -23,8 +23,12 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Check, Filter, Pencil, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 export default function Expenses() {
+  const { user } = useAuth();
+  
+  // Estados para filtros
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [filterCategory, setFilterCategory] = useState<string>("all");
@@ -35,6 +39,14 @@ export default function Expenses() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [ocrData, setOcrData] = useState<ExtractedReceiptData | null>(null);
   const [showOCRModal, setShowOCRModal] = useState(false);
+  const [formData, setFormData] = useState({
+    establishment: "",
+    amount: "",
+    categoryId: "",
+    purchaseDate: new Date().toISOString().split("T")[0],
+    paid: "no" as "yes" | "no",
+    paymentDate: "",
+  });
 
   const startDate = useMemo(() => {
     return new Date(selectedYear, selectedMonth - 1, 1);
@@ -44,17 +56,36 @@ export default function Expenses() {
     return new Date(selectedYear, selectedMonth, 0);
   }, [selectedMonth, selectedYear]);
 
-  const { data: expenses, isLoading } = trpc.expenses.list.useQuery({
-    startDate,
-    endDate,
-    ...(filterCategory !== "all" && { categoryId: Number(filterCategory) }),
-    ...(filterPaid !== "all" && { paid: filterPaid as "yes" | "no" }),
-  });
+  const { data: expenses, isLoading } = trpc.expenses.list.useQuery(
+    {
+      startDate,
+      endDate,
+      ...(filterCategory !== "all" && { categoryId: Number(filterCategory) }),
+      ...(filterPaid !== "all" && { paid: filterPaid as "yes" | "no" }),
+    },
+    { enabled: !!user }
+  );
 
-  const { data: categories } = trpc.categories.list.useQuery();
-  const deleteMutation = trpc.expenses.delete.useMutation();
-  const updateMutation = trpc.expenses.update.useMutation();
-  const createMutation = trpc.expenses.create.useMutation();
+  const { data: categories } = trpc.categories.list.useQuery(undefined, { enabled: !!user });
+  const utils = trpc.useUtils();
+  const deleteMutation = trpc.expenses.delete.useMutation({
+    onSuccess: () => {
+      utils.expenses.list.invalidate();
+      toast.success("Despesa deletada com sucesso");
+    },
+  });
+  const updateMutation = trpc.expenses.update.useMutation({
+    onSuccess: () => {
+      utils.expenses.list.invalidate();
+      toast.success("Despesa atualizada com sucesso");
+    },
+  });
+  const createMutation = trpc.expenses.create.useMutation({
+    onSuccess: () => {
+      utils.expenses.list.invalidate();
+      toast.success("Despesa criada com sucesso");
+    },
+  });
 
   const months = [
     { value: 1, label: "Janeiro" },
@@ -98,50 +129,101 @@ export default function Expenses() {
   const sortedExpenses = useMemo(() => {
     if (!filteredExpenses) return [];
     let sorted = [...filteredExpenses];
-    if (sortBy === "date-new") return sorted.sort((a, b) => new Date(b.expense.purchaseDate).getTime() - new Date(a.expense.purchaseDate).getTime());
-    if (sortBy === "date-old") return sorted.sort((a, b) => new Date(a.expense.purchaseDate).getTime() - new Date(b.expense.purchaseDate).getTime());
-    if (sortBy === "alpha-az") return sorted.sort((a, b) => a.expense.establishment.localeCompare(b.expense.establishment));
-    if (sortBy === "alpha-za") return sorted.sort((a, b) => b.expense.establishment.localeCompare(a.expense.establishment));
+    if (sortBy === "date-new") return sorted.reverse();
+    if (sortBy === "date-old") return sorted;
+    if (sortBy === "alpha-az")
+      return sorted.sort((a, b) => a.expense.establishment.localeCompare(b.expense.establishment));
+    if (sortBy === "alpha-za")
+      return sorted.sort((a, b) => b.expense.establishment.localeCompare(a.expense.establishment));
     if (sortBy === "value-asc") return sorted.sort((a, b) => a.expense.amount - b.expense.amount);
     if (sortBy === "value-desc") return sorted.sort((a, b) => b.expense.amount - a.expense.amount);
     return sorted;
   }, [filteredExpenses, sortBy]);
 
-  const togglePaid = async (expense: any) => {
-    const newPaidStatus = expense.expense.paid === "yes" ? "no" : "yes";
-    await updateMutation.mutateAsync({
-      id: expense.expense.id,
-      paid: newPaidStatus,
-      paymentDate: newPaidStatus === "yes" ? new Date() : undefined,
-    });
-    toast.success("Status atualizado com sucesso");
-  };
-
   const handleEdit = (expense: any) => {
     setEditingExpense(expense);
+    setFormData({
+      establishment: expense.expense.establishment,
+      amount: (expense.expense.amount / 100).toString(),
+      categoryId: expense.category?.id?.toString() || "",
+      purchaseDate: new Date(expense.expense.purchaseDate).toISOString().split("T")[0],
+      paid: expense.expense.paid,
+      paymentDate: expense.expense.paymentDate
+        ? new Date(expense.expense.paymentDate).toISOString().split("T")[0]
+        : "",
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleNewExpense = () => {
+    setEditingExpense(null);
+    setFormData({
+      establishment: "",
+      amount: "",
+      categoryId: "",
+      purchaseDate: new Date().toISOString().split("T")[0],
+      paid: "no" as "yes" | "no",
+      paymentDate: "",
+    });
     setIsDialogOpen(true);
   };
 
   const handleDelete = async (id: number) => {
     if (confirm("Tem certeza que deseja deletar esta despesa?")) {
       await deleteMutation.mutateAsync({ id });
-      toast.success("Despesa deletada com sucesso");
     }
   };
 
   const handleSaveEdit = async () => {
+    if (!formData.establishment || !formData.amount || !formData.categoryId) {
+      toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
     if (editingExpense) {
       await updateMutation.mutateAsync({
         id: editingExpense.expense.id,
-        establishment: editingExpense.expense.establishment,
-        amount: editingExpense.expense.amount,
-        categoryId: editingExpense.category?.id || 0,
-        purchaseDate: new Date(editingExpense.expense.purchaseDate),
+        establishment: formData.establishment,
+        amount: Math.round(Number(formData.amount) * 100),
+        categoryId: Number(formData.categoryId),
+        purchaseDate: new Date(formData.purchaseDate),
+        paid: formData.paid,
+        paymentDate: formData.paid === "yes" && formData.paymentDate ? new Date(formData.paymentDate) : undefined,
       });
       setIsDialogOpen(false);
       setEditingExpense(null);
-      toast.success("Despesa atualizada com sucesso");
+      setFormData({
+        establishment: "",
+        amount: "",
+        categoryId: "",
+        purchaseDate: new Date().toISOString().split("T")[0],
+        paid: "no" as "yes" | "no",
+        paymentDate: "",
+      });
     }
+  };
+
+  const handleSaveNew = async () => {
+    if (!formData.establishment || !formData.amount || !formData.categoryId) {
+      toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+    await createMutation.mutateAsync({
+      establishment: formData.establishment,
+      amount: Math.round(Number(formData.amount) * 100),
+      categoryId: Number(formData.categoryId),
+      purchaseDate: new Date(formData.purchaseDate),
+      paid: formData.paid,
+      paymentDate: formData.paid === "yes" && formData.paymentDate ? new Date(formData.paymentDate) : undefined,
+    });
+    setIsDialogOpen(false);
+    setFormData({
+      establishment: "",
+      amount: "",
+      categoryId: "",
+      purchaseDate: new Date().toISOString().split("T")[0],
+      paid: "no" as "yes" | "no",
+      paymentDate: "",
+    });
   };
 
   return (
@@ -153,7 +235,7 @@ export default function Expenses() {
             <h1 className="text-3xl font-bold text-gray-900">Despesas</h1>
             <p className="text-gray-600 mt-1">Gerencie suas despesas e acompanhe gastos</p>
           </div>
-          <Button onClick={() => setIsDialogOpen(true)} className="gap-2 w-full sm:w-auto">
+          <Button onClick={handleNewExpense} className="gap-2 w-full sm:w-auto">
             <Plus className="w-4 h-4" />
             Nova Despesa
           </Button>
@@ -201,9 +283,9 @@ export default function Expenses() {
                     onChange={(e) => setFilterCategory(e.target.value)}
                     className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="all">Todas as categorias</option>
+                    <option value="all">Todas</option>
                     {categories?.map((cat) => (
-                      <option key={cat.id} value={cat.id.toString()}>
+                      <option key={cat.id} value={cat.id}>
                         {cat.name}
                       </option>
                     ))}
@@ -218,8 +300,8 @@ export default function Expenses() {
                     className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="all">Todos</option>
-                    <option value="yes">Pagos</option>
-                    <option value="no">Não pagos</option>
+                    <option value="yes">Pago</option>
+                    <option value="no">Não Pago</option>
                   </select>
                 </div>
 
@@ -261,82 +343,71 @@ export default function Expenses() {
           </CardContent>
         </Card>
 
-        {/* Lista de Despesas */}
+        {/* Despesas */}
         <Card>
           <CardContent className="pt-6">
             {isLoading ? (
-              <div className="text-center py-8 text-muted-foreground">Carregando despesas...</div>
-            ) : sortedExpenses && sortedExpenses.length > 0 ? (
-              <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pb-4 border-b gap-2">
-                  <p className="text-sm font-medium">Total do período</p>
-                  <p className="text-lg font-semibold">{formatCurrency(totalExpenses)}</p>
-                </div>
-                <div className="space-y-3">
-                  {sortedExpenses.map((expense) => (
-                    <div
-                      key={expense.expense.id}
-                      className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => togglePaid(expense)}
-                        className={`flex-shrink-0 ${
-                          expense.expense.paid === "yes" ? "text-green-600" : "text-gray-400"
-                        }`}
-                      >
-                        <Check className="h-5 w-5" />
-                      </Button>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <p className="font-medium truncate">{expense.expense.establishment}</p>
-                          {expense.expense.totalInstallments > 1 && (
-                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded flex-shrink-0">
-                              parcelado {expense.expense.currentInstallment}/{expense.expense.totalInstallments}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-1 text-xs sm:text-sm text-muted-foreground">
-                          <span className="truncate">{expense.category?.name}</span>
-                          <span className="hidden sm:inline">•</span>
-                          <span>
-                            {format(new Date(expense.expense.purchaseDate), "dd/MM/yyyy", { locale: ptBR })}
+              <div className="text-center py-8">Carregando...</div>
+            ) : sortedExpenses.length > 0 ? (
+              <div className="space-y-3">
+                {sortedExpenses.map((expense) => (
+                  <div
+                    key={expense.expense.id}
+                    className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                        <p className="font-medium truncate">{expense.expense.establishment}</p>
+                        {expense.expense.totalInstallments > 1 && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
+                            parcelado {expense.expense.currentInstallment}/{expense.expense.totalInstallments}
                           </span>
-                          {expense.expense.paid === "yes" && expense.expense.paymentDate && (
-                            <>
-                              <span className="hidden sm:inline">•</span>
-                              <span className="text-green-600">
-                                Pago em {format(new Date(expense.expense.paymentDate), "dd/MM/yyyy", { locale: ptBR })}
-                              </span>
-                            </>
-                          )}
-                        </div>
+                        )}
+                        {expense.expense.paid === "yes" && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded">
+                            <Check className="w-3 h-3" />
+                            Pago
+                          </span>
+                        )}
                       </div>
-
-                      <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
-                        <p className="text-base sm:text-lg font-semibold flex-shrink-0">
-                          {formatCurrency(expense.expense.amount)}
-                        </p>
-                        <div className="flex gap-1 sm:gap-2 flex-shrink-0">
-                          <Button variant="ghost" size="icon" onClick={() => handleEdit(expense)} title="Editar">
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(expense.expense.id)}
-                            disabled={deleteMutation.isPending}
-                            title="Deletar"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                      <div className="flex flex-wrap items-center gap-1 text-xs sm:text-sm text-muted-foreground">
+                        <span className="truncate">{expense.category?.name}</span>
+                        <span className="hidden sm:inline">•</span>
+                        <span>
+                          {format(new Date(expense.expense.purchaseDate), "dd/MM/yyyy", { locale: ptBR })}
+                        </span>
+                        {expense.expense.paid === "yes" && expense.expense.paymentDate && (
+                          <>
+                            <span className="hidden sm:inline">•</span>
+                            <span className="text-green-600">
+                              Pago em {format(new Date(expense.expense.paymentDate), "dd/MM/yyyy", { locale: ptBR })}
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
-                  ))}
-                </div>
+
+                    <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
+                      <p className="text-base sm:text-lg font-semibold flex-shrink-0">
+                        {formatCurrency(expense.expense.amount)}
+                      </p>
+                      <div className="flex gap-1 sm:gap-2 flex-shrink-0">
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(expense)} title="Editar">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(expense.expense.id)}
+                          disabled={deleteMutation.isPending}
+                          title="Deletar"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground">Nenhuma despesa encontrada</div>
@@ -345,67 +416,93 @@ export default function Expenses() {
         </Card>
       </div>
 
-      {/* Edit Dialog */}
+      {/* Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="w-full max-w-md">
+        <DialogContent className="w-full max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Editar Despesa</DialogTitle>
+            <DialogTitle>{editingExpense ? "Editar Despesa" : "Nova Despesa"}</DialogTitle>
           </DialogHeader>
-          {editingExpense && (
-            <div className="space-y-4">
-              <div>
-                <Label>Estabelecimento</Label>
-                <Input
-                  value={editingExpense.expense.establishment}
-                  onChange={(e) =>
-                    setEditingExpense({
-                      ...editingExpense,
-                      expense: { ...editingExpense.expense, establishment: e.target.value },
-                    })
-                  }
-                  className="mt-2"
-                />
-              </div>
-              <div>
-                <Label>Valor</Label>
-                <Input
-                  type="number"
-                  value={editingExpense.expense.amount / 100}
-                  onChange={(e) =>
-                    setEditingExpense({
-                      ...editingExpense,
-                      expense: { ...editingExpense.expense, amount: Number(e.target.value) * 100 },
-                    })
-                  }
-                  className="mt-2"
-                />
-              </div>
-              <div>
-                <Label>Categoria</Label>
-                <select
-                  value={editingExpense.category?.id || ""}
-                  onChange={(e) =>
-                    setEditingExpense({
-                      ...editingExpense,
-                      category: categories?.find((c) => c.id === Number(e.target.value)),
-                    })
-                  }
-                  className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg"
-                >
-                  {categories?.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          <div className="space-y-4">
+            <div>
+              <Label>Estabelecimento *</Label>
+              <Input
+                value={formData.establishment}
+                onChange={(e) => setFormData({ ...formData, establishment: e.target.value })}
+                placeholder="Ex: Supermercado, Restaurante..."
+                className="mt-2"
+              />
             </div>
-          )}
+
+            <div>
+              <Label>Valor (R$) *</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={formData.amount}
+                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                placeholder="0,00"
+                className="mt-2"
+              />
+            </div>
+
+            <div>
+              <Label>Categoria *</Label>
+              <select
+                value={formData.categoryId}
+                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg"
+              >
+                <option value="">Selecione uma categoria</option>
+                {categories?.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <Label>Data da Compra *</Label>
+              <Input
+                type="date"
+                value={formData.purchaseDate}
+                onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })}
+                className="mt-2"
+              />
+            </div>
+
+            <div>
+              <Label>Status de Pagamento</Label>
+              <select
+                value={formData.paid}
+                onChange={(e) => setFormData({ ...formData, paid: e.target.value as "yes" | "no" })}
+                className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg"
+              >
+                <option value="no">Não Pago</option>
+                <option value="yes">Pago</option>
+              </select>
+            </div>
+
+            {formData.paid === "yes" && (
+              <div>
+                <Label>Data do Pagamento</Label>
+                <Input
+                  type="date"
+                  value={formData.paymentDate}
+                  onChange={(e) => setFormData({ ...formData, paymentDate: e.target.value })}
+                  className="mt-2"
+                />
+              </div>
+            )}
+          </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleSaveEdit}>Salvar</Button>
+            <Button onClick={editingExpense ? handleSaveEdit : handleSaveNew}>
+              {editingExpense ? "Atualizar" : "Criar"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
