@@ -310,9 +310,16 @@ export default function ToPay() {
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-2">
                           <div>
-                            <h3 className="font-semibold text-gray-900">
-                              {expense.establishment}
-                            </h3>
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold text-gray-900">
+                                {expense.establishment}
+                              </h3>
+                              {expense.totalInstallments > 1 && (
+                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                  parcelado {expense.currentInstallment}/{expense.totalInstallments}
+                                </span>
+                              )}
+                            </div>
                             <p className="text-sm text-gray-600">
                               {getCategoryName(expense.categoryId)}
                             </p>

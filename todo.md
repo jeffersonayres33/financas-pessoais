@@ -252,3 +252,7 @@
 - [x] Adicionar scroll no diálogo de Nova Despesa
 - [x] Testar criação de parcelas nos meses subsequentes
 - [x] Testar exibição de etiqueta de parcelas
+
+## Fase 29: Adicionar Etiquetas de Parcelas em "A Pagar"
+- [x] Adicionar etiqueta "parcelado X/Y" em ToPay.tsx
+- [x] Testar exibição de etiquetas
