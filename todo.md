@@ -281,3 +281,9 @@
 - [x] Atualizar cálculo de totalUnpaid para respeitar filtro de parcelados
 - [x] Atualizar cálculo de totalSelected para respeitar filtro de parcelados
 - [x] Testar Resumo de Pagamentos com filtro de parcelados
+
+## Fase 34: Reformular Despesas com Aparência de A Pagar e Responsividade
+- [x] Reformular filtros em Expenses com rótulos (Label) e botão filtrar
+- [x] Melhorar responsividade da seção Despesas
+- [x] Alinhar layout com componentes responsivos
+- [x] Testar em diferentes tamanhos de tela
