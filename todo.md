@@ -256,3 +256,8 @@
 ## Fase 29: Adicionar Etiquetas de Parcelas em "A Pagar"
 - [x] Adicionar etiqueta "parcelado X/Y" em ToPay.tsx
 - [x] Testar exibição de etiquetas
+
+## Fase 30: Remover Botão de Fotos da Seção Despesas
+- [x] Remover botão "Fotos" da interface de Despesas
+- [x] Manter apenas botões "Editar" e "Deletar"
+- [x] Testar interface e validar layout
