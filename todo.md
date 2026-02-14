@@ -287,3 +287,10 @@
 - [x] Melhorar responsividade da seção Despesas
 - [x] Alinhar layout com componentes responsivos
 - [x] Testar em diferentes tamanhos de tela
+
+## Fase 35: Reformular Receitas e Categorias com Aparência de Despesas
+- [x] Reformular filtros em Incomes.tsx (rótulos, Card, botão Filtrar)
+- [x] Melhorar responsividade de Incomes.tsx
+- [x] Reformular filtros em Categories.tsx (rótulos, Card, botão Filtrar)
+- [x] Melhorar responsividade de Categories.tsx
+- [x] Testar layout responsivo em ambas as seções

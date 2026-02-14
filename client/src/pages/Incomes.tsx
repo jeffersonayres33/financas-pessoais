@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { trpc } from "@/lib/trpc";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Filter, Pencil, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -186,198 +186,220 @@ export default function Incomes() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Receitas</h1>
-            <p className="text-muted-foreground">Gerencie suas receitas mensais</p>
+            <h1 className="text-3xl font-bold text-gray-900">Receitas</h1>
+            <p className="text-gray-600 mt-1">Gerencie suas receitas mensais</p>
           </div>
-          <Button onClick={() => setIsDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
+          <Button onClick={() => setIsDialogOpen(true)} className="gap-2 w-full sm:w-auto">
+            <Plus className="w-4 h-4" />
             Nova Receita
           </Button>
         </div>
 
-        <div className="flex flex-wrap gap-4">
-          <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(Number(v))}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {months.map((month) => (
-                <SelectItem key={month.value} value={month.value.toString()}>
-                  {month.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(Number(v))}>
-            <SelectTrigger className="w-[100px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {years.map((year) => (
-                <SelectItem key={year} value={year.toString()}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={filterCategory} onValueChange={setFilterCategory}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Todas categorias" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas categorias</SelectItem>
-              {categories?.map((cat) => (
-                <SelectItem key={cat.id} value={cat.id.toString()}>
-                  {cat.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Ordenar por" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="date-new">Data: Mais Novo</SelectItem>
-              <SelectItem value="date-old">Data: Mais Velho</SelectItem>
-              <SelectItem value="alpha-az">Alfabético: A-Z</SelectItem>
-              <SelectItem value="alpha-za">Alfabético: Z-A</SelectItem>
-              <SelectItem value="value-asc">Valor: Menor para Maior</SelectItem>
-              <SelectItem value="value-desc">Valor: Maior para Menor</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
+        {/* Filtros */}
         <Card>
           <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Total de Receitas</h3>
-              <p className="text-2xl font-bold text-green-600">{formatCurrency(totalIncomes)}</p>
-            </div>
-
-            {isLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-20 bg-muted animate-pulse rounded" />
-                ))}
-              </div>
-            ) : incomes && incomes.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">Nenhuma receita encontrada neste período</p>
-            ) : (
-              <div className="space-y-3">
-                {sortedIncomes?.map((income) => (
-                  <div
-                    key={income.income.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition-colors"
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Mês</Label>
+                  <select
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                    className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <div className="flex-1">
-                      <p className="font-medium">{income.income.description}</p>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span>{income.category?.name}</span>
-                        <span>•</span>
-                        <span>{format(new Date(income.income.date), "dd/MM/yyyy", { locale: ptBR })}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <p className="text-lg font-semibold text-green-600">{formatCurrency(income.income.amount)}</p>
-                      <div className="flex gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(income)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(income.income.id)}
-                          disabled={deleteMutation.isPending}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                    {months.map((month) => (
+                      <option key={month.value} value={month.value}>
+                        {month.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Ano</Label>
+                  <select
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(Number(e.target.value))}
+                    className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {years.map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Categorias</Label>
+                  <select
+                    value={filterCategory}
+                    onChange={(e) => setFilterCategory(e.target.value)}
+                    className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="all">Todas as categorias</option>
+                    {categories?.map((cat) => (
+                      <option key={cat.id} value={cat.id.toString()}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Ordenar por</Label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="date-new">Data: Mais Novo</option>
+                    <option value="date-old">Data: Mais Velho</option>
+                    <option value="alpha-az">Alfabético: A-Z</option>
+                    <option value="alpha-za">Alfabético: Z-A</option>
+                    <option value="value-asc">Valor: Menor para Maior</option>
+                    <option value="value-desc">Valor: Maior para Menor</option>
+                  </select>
+                </div>
               </div>
-            )}
+
+              <Button variant="outline" className="gap-2 w-full sm:w-auto">
+                <Filter className="w-4 h-4" />
+                Filtrar
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>{editingIncome ? "Editar Receita" : "Nova Receita"}</DialogTitle>
-              <DialogDescription>
-                {editingIncome ? "Atualize as informações da receita" : "Preencha os dados da nova receita"}
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit}>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="description">Descrição</Label>
-                  <Input
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Ex: Salário, Freelance, Investimentos..."
-                    required
-                  />
+        {/* Lista de Receitas */}
+        <Card>
+          <CardContent className="pt-6">
+            {isLoading ? (
+              <div className="text-center py-8 text-muted-foreground">Carregando receitas...</div>
+            ) : sortedIncomes && sortedIncomes.length > 0 ? (
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pb-4 border-b gap-2">
+                  <p className="text-sm font-medium">Total do período</p>
+                  <p className="text-lg font-semibold text-green-600">{formatCurrency(totalIncomes)}</p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="category">Categoria</Label>
-                  <Select
-                    value={formData.categoryId}
-                    onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
-                    required
-                  >
-                    <SelectTrigger id="category">
-                      <SelectValue placeholder="Selecione uma categoria" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories?.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id.toString()}>
-                          {cat.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="date">Data</Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="amount">Valor (R$)</Label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.amount}
-                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                    placeholder="0,00"
-                    required
-                  />
+                <div className="space-y-3">
+                  {sortedIncomes?.map((income) => (
+                    <div
+                      key={income.income.id}
+                      className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{income.income.description}</p>
+                        <div className="flex flex-wrap items-center gap-1 text-xs sm:text-sm text-muted-foreground mt-1">
+                          <span className="truncate">{income.category?.name}</span>
+                          <span className="hidden sm:inline">•</span>
+                          <span>{format(new Date(income.income.date), "dd/MM/yyyy", { locale: ptBR })}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
+                        <p className="text-base sm:text-lg font-semibold text-green-600 flex-shrink-0">
+                          {formatCurrency(income.income.amount)}
+                        </p>
+                        <div className="flex gap-1 sm:gap-2 flex-shrink-0">
+                          <Button variant="ghost" size="icon" onClick={() => handleEdit(income)} title="Editar">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(income.income.id)}
+                            disabled={deleteMutation.isPending}
+                            title="Deletar"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={resetForm}>
-                  Cancelar
-                </Button>
-                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                  {editingIncome ? "Atualizar" : "Criar"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">Nenhuma receita encontrada neste período</div>
+            )}
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="w-full max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editingIncome ? "Editar Receita" : "Nova Receita"}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="description">Descrição</Label>
+              <Input
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Ex: Salário, Freelance..."
+                required
+                className="mt-2"
+              />
+            </div>
+            <div>
+              <Label htmlFor="category">Categoria</Label>
+              <select
+                id="category"
+                value={formData.categoryId}
+                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+                className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="">Selecione uma categoria</option>
+                {categories?.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="date">Data</Label>
+              <Input
+                id="date"
+                type="date"
+                value={formData.date}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                required
+                className="mt-2"
+              />
+            </div>
+            <div>
+              <Label htmlFor="amount">Valor</Label>
+              <Input
+                id="amount"
+                type="number"
+                step="0.01"
+                value={formData.amount}
+                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                placeholder="0.00"
+                required
+                className="mt-2"
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={resetForm}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                {editingIncome ? "Atualizar" : "Criar"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }

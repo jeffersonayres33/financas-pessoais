@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Filter, Pencil, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -130,31 +130,49 @@ export default function Categories() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Categorias</h1>
-          <p className="text-muted-foreground">Gerencie suas categorias de despesas e receitas</p>
-        </div>
-
-        <div className="flex gap-4 items-end">
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Ordenar por" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="date-new">Data: Mais Novo</SelectItem>
-              <SelectItem value="date-old">Data: Mais Velho</SelectItem>
-              <SelectItem value="alpha-az">Alfabético: A-Z</SelectItem>
-              <SelectItem value="alpha-za">Alfabético: Z-A</SelectItem>
-              <SelectItem value="value-asc">Orçamento: Menor para Maior</SelectItem>
-              <SelectItem value="value-desc">Orçamento: Maior para Menor</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button onClick={() => setIsDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Categorias</h1>
+            <p className="text-gray-600 mt-1">Gerencie suas categorias de despesas e receitas</p>
+          </div>
+          <Button onClick={() => setIsDialogOpen(true)} className="gap-2 w-full sm:w-auto">
+            <Plus className="w-4 h-4" />
             Nova Categoria
           </Button>
         </div>
 
+        {/* Filtros */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-1 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Ordenar por</Label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="date-new">Data: Mais Novo</option>
+                    <option value="date-old">Data: Mais Velho</option>
+                    <option value="alpha-az">Alfabético: A-Z</option>
+                    <option value="alpha-za">Alfabético: Z-A</option>
+                    <option value="value-asc">Orçamento: Menor para Maior</option>
+                    <option value="value-desc">Orçamento: Maior para Menor</option>
+                  </select>
+                </div>
+              </div>
+
+              <Button variant="outline" className="gap-2 w-full sm:w-auto">
+                <Filter className="w-4 h-4" />
+                Filtrar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Categorias */}
         {isLoading ? (
           <div className="grid gap-6 md:grid-cols-2">
             {[1, 2].map((i) => (
@@ -174,6 +192,7 @@ export default function Categories() {
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2">
+            {/* Categorias de Despesas */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-red-600">Categorias de Despesas</CardTitle>
@@ -186,16 +205,21 @@ export default function Categories() {
                     {expenseCategories.map((category) => (
                       <div
                         key={category.id}
-                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors"
+                        className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
                       >
-                        <div>
-                          <p className="font-medium">{category.name}</p>
-                          <p className="text-sm text-muted-foreground">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{category.name}</p>
+                          <p className="text-sm text-muted-foreground mt-1">
                             Orçamento: {formatCurrency(category.monthlyBudget)}
                           </p>
                         </div>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="icon" onClick={() => handleEdit(category)}>
+                        <div className="flex gap-1 sm:gap-2 flex-shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(category)}
+                            title="Editar"
+                          >
                             <Pencil className="h-4 w-4" />
                           </Button>
                           <Button
@@ -203,6 +227,7 @@ export default function Categories() {
                             size="icon"
                             onClick={() => handleDelete(category.id)}
                             disabled={deleteMutation.isPending}
+                            title="Deletar"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -214,6 +239,7 @@ export default function Categories() {
               </CardContent>
             </Card>
 
+            {/* Categorias de Receitas */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-green-600">Categorias de Receitas</CardTitle>
@@ -226,16 +252,21 @@ export default function Categories() {
                     {incomeCategories.map((category) => (
                       <div
                         key={category.id}
-                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors"
+                        className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
                       >
-                        <div>
-                          <p className="font-medium">{category.name}</p>
-                          <p className="text-sm text-muted-foreground">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{category.name}</p>
+                          <p className="text-sm text-muted-foreground mt-1">
                             Orçamento: {formatCurrency(category.monthlyBudget)}
                           </p>
                         </div>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="icon" onClick={() => handleEdit(category)}>
+                        <div className="flex gap-1 sm:gap-2 flex-shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(category)}
+                            title="Editar"
+                          >
                             <Pencil className="h-4 w-4" />
                           </Button>
                           <Button
@@ -243,6 +274,7 @@ export default function Categories() {
                             size="icon"
                             onClick={() => handleDelete(category.id)}
                             disabled={deleteMutation.isPending}
+                            title="Deletar"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -256,8 +288,9 @@ export default function Categories() {
           </div>
         )}
 
+        {/* Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent>
+          <DialogContent className="w-full max-w-md">
             <DialogHeader>
               <DialogTitle>{editingCategory ? "Editar Categoria" : "Nova Categoria"}</DialogTitle>
               <DialogDescription>
@@ -266,47 +299,46 @@ export default function Categories() {
                   : "Preencha os dados para criar uma nova categoria"}
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit}>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Ex: Alimentação, Transporte..."
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="type">Tipo</Label>
-                  <Select
-                    value={formData.type}
-                    onValueChange={(value: "expense" | "income") => setFormData({ ...formData, type: value })}
-                    disabled={!!editingCategory}
-                  >
-                    <SelectTrigger id="type">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="expense">Despesa</SelectItem>
-                      <SelectItem value="income">Receita</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="budget">Orçamento Mensal (R$)</Label>
-                  <Input
-                    id="budget"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.monthlyBudget}
-                    onChange={(e) => setFormData({ ...formData, monthlyBudget: e.target.value })}
-                    placeholder="0,00"
-                    required
-                  />
-                </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="name">Nome</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Ex: Alimentação, Transporte..."
+                  required
+                  className="mt-2"
+                />
+              </div>
+              <div>
+                <Label htmlFor="type">Tipo</Label>
+                <select
+                  id="type"
+                  value={formData.type}
+                  onChange={(e) =>
+                    setFormData({ ...formData, type: e.target.value as "expense" | "income" })
+                  }
+                  disabled={!!editingCategory}
+                  className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                >
+                  <option value="expense">Despesa</option>
+                  <option value="income">Receita</option>
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="budget">Orçamento Mensal (R$)</Label>
+                <Input
+                  id="budget"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.monthlyBudget}
+                  onChange={(e) => setFormData({ ...formData, monthlyBudget: e.target.value })}
+                  placeholder="0,00"
+                  required
+                  className="mt-2"
+                />
               </div>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={resetForm}>
