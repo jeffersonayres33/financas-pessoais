@@ -301,3 +301,10 @@
 - [x] Adicionar campos data, status de pagamento e data do pagamento no diálogo
 - [x] Testar criação de nova despesa
 - [x] Testar edição com todos os campos
+
+## Fase 38: Restaurar Funcionalidade de Fotos e OCR em Nova Despesa
+- [x] Restaurar componentes ReceiptUploader e ExpenseAttachmentUploadWithOCR
+- [x] Implementar fluxo modal OCR com z-index 9999
+- [x] Fechar diálogo Nova Despesa ao iniciar extração
+- [x] Reabrir diálogo com dados preenchidos após confirmar OCR
+- [x] Testar fluxo completo de OCR

@@ -423,6 +423,20 @@ export default function Expenses() {
             <DialogTitle>{editingExpense ? "Editar Despesa" : "Nova Despesa"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            {!editingExpense && (
+              <div className="border-b pb-4">
+                <Label className="text-sm font-medium">Extrair Dados do Recibo</Label>
+                <ReceiptUploader
+                  onImageSelected={(file, preview) => {
+                    setOcrData({ value: 0, date: new Date().toISOString(), establishment: "", category: null, description: null, confidence: "low", rawText: "" });
+                  }}
+                  onExtract={(file) => {
+                    setShowOCRModal(true);
+                    setIsDialogOpen(false);
+                  }}
+                />
+              </div>
+            )}
             <div>
               <Label>Estabelecimento *</Label>
               <Input
@@ -494,6 +508,13 @@ export default function Expenses() {
                 />
               </div>
             )}
+
+            {editingExpense && (
+              <div className="border-t pt-4">
+                <Label className="text-sm font-medium">Anexos</Label>
+                <ExpenseAttachmentUploadWithOCR expenseId={editingExpense.expense.id} />
+              </div>
+            )}
           </div>
 
           <DialogFooter>
@@ -506,6 +527,36 @@ export default function Expenses() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {showOCRModal && ocrData && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowOCRModal(false)} />
+          <div className="relative bg-white rounded-lg shadow-lg max-w-md w-full mx-4">
+            <OCRResultModal
+              data={ocrData}
+              imagePreview=""
+              onConclude={(confirmedData: ExtractedReceiptData) => {
+                setFormData({
+                  ...formData,
+                  establishment: confirmedData.establishment || formData.establishment,
+                  amount: confirmedData.value ? (confirmedData.value / 100).toString() : formData.amount,
+                  purchaseDate: confirmedData.date
+                    ? new Date(confirmedData.date).toISOString().split("T")[0]
+                    : formData.purchaseDate,
+                });
+                setShowOCRModal(false);
+                setOcrData(null);
+                setIsDialogOpen(true);
+              }}
+              onCancel={() => {
+                setShowOCRModal(false);
+                setOcrData(null);
+                setIsDialogOpen(true);
+              }}
+            />
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }
