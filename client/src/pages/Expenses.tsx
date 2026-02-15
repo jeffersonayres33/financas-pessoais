@@ -237,11 +237,8 @@ export default function Expenses() {
     if (data.establishment) {
       setFormData((prev) => ({ ...prev, establishment: data.establishment || "" }));
     }
-    if (data.value !== null && data.value !== undefined) {
-      // O OCR retorna o valor em reais (ex: 293.81)
-      // Garantir que está em reais e converter para string com 2 casas decimais
-      const valueInReais = typeof data.value === 'string' ? parseFloat(data.value) : data.value;
-      setFormData((prev) => ({ ...prev, amount: valueInReais.toFixed(2) }));
+    if (data.value) {
+      setFormData((prev) => ({ ...prev, amount: data.value!.toFixed(2) }));
     }
     if (data.date) {
       setFormData((prev) => ({ ...prev, purchaseDate: data.date || prev.purchaseDate }));
