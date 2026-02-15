@@ -367,3 +367,12 @@
 - [x] Testar OCR com múltiplos valores e datas
 - [x] Validar conversão de valores (reais para centavos)
 - [x] Validar extração de datas do recibo
+
+
+## Fase 47: Adicionar Botão de Upload OCR na Tela Nova Despesa
+- [x] Verificar componentes ReceiptUploader e ExpenseAttachmentUploadWithOCR da versão 7b6d5f4
+- [x] Adicionar botão "Extrair do Recibo" no diálogo Nova Despesa
+- [x] Criar modal separado para upload de imagem
+- [x] Integrar fluxo de OCR com preenchimento automático de campos
+- [x] Testar upload e extração de dados
+- [x] Validar que dados extraídos preenchem corretamente os campos

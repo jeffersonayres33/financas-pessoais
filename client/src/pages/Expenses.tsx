@@ -21,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { trpc } from "@/lib/trpc";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Check, Filter, Pencil, Plus, Trash2, X } from "lucide-react";
+import { Check, Filter, Pencil, Plus, Trash2, X, Image } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -34,6 +34,7 @@ export default function Expenses() {
   const [sortBy, setSortBy] = useState<string>("date-new");
   const [filterInstallments, setFilterInstallments] = useState<string>("all");
   const [showOCRModal, setShowOCRModal] = useState(false);
+  const [showReceiptUploadModal, setShowReceiptUploadModal] = useState(false);
   const [ocrResult, setOcrResult] = useState<ExtractedReceiptData | null>(null);
   const [ocrImagePreview, setOcrImagePreview] = useState<string>("");
   const [isExtracting, setIsExtracting] = useState(false);
@@ -457,7 +458,18 @@ export default function Expenses() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="establishment">Estabelecimento</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="establishment">Estabelecimento</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowReceiptUploadModal(true)}
+                    className="text-xs"
+                  >
+                    📷 Extrair do Recibo
+                  </Button>
+                </div>
                 <Input
                   id="establishment"
                   value={formData.establishment}
@@ -578,6 +590,23 @@ export default function Expenses() {
             isLoading={isExtracting}
           />
         )}
+
+        {/* Modal para Upload de Recibo */}
+        <Dialog open={showReceiptUploadModal} onOpenChange={setShowReceiptUploadModal}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Extrair Dados do Recibo</DialogTitle>
+              <DialogDescription>
+                Envie uma foto do recibo ou nota fiscal para extrair os dados automaticamente
+              </DialogDescription>
+            </DialogHeader>
+            <ReceiptUploader
+              onImageSelected={handleReceiptImageSelected}
+              onExtract={handleExtractOCR}
+              isExtracting={isExtracting}
+            />
+          </DialogContent>
+        </Dialog>
 
         <LoadingOverlay isVisible={isExtracting} message="Processando imagem..." />
       </div>
