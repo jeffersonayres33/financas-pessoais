@@ -347,3 +347,12 @@
 - [x] Aplicar implementação correta da versão 7b6d5f4e
 - [x] Testar conversão com múltiplos valores (R$ 293.81, R$ 100.00, R$ 1234.56)
 - [x] Validar que valor em reais permanece igual em ambas as telas
+
+
+## Fase 45: Corrigir Formatação de Valores OCR entre Telas
+- [x] Investigar OCRResultModal para ver como valor é exibido (R$ 293.81)
+- [x] Investigar Expenses.tsx para ver como valor é recebido (apenas números)
+- [x] Identificar onde R$ e ponto estão sendo adicionados/removidos
+- [x] Corrigir para manter consistência: sempre reais com ponto decimal
+- [x] Testar com múltiplos valores (R$ 293.81, R$ 100.00, R$ 1234.56)
+- [x] Validar que conversão para centavos funciona corretamente

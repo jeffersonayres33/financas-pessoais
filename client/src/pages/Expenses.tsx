@@ -238,7 +238,11 @@ export default function Expenses() {
       setFormData((prev) => ({ ...prev, establishment: data.establishment || "" }));
     }
     if (data.value) {
-      setFormData((prev) => ({ ...prev, amount: data.value!.toFixed(2) }));
+      // Converter valor para string com vírgula como separador decimal
+      // OCR retorna: 293.81 (número em reais com ponto)
+      // Converter para: "293,81" (string com vírgula para exibição no input)
+      const valueWithComma = data.value!.toFixed(2).replace(".", ",");
+      setFormData((prev) => ({ ...prev, amount: valueWithComma }));
     }
     if (data.date) {
       setFormData((prev) => ({ ...prev, purchaseDate: data.date || prev.purchaseDate }));
@@ -272,10 +276,12 @@ export default function Expenses() {
       return;
     }
     if (editingExpense) {
+      // Converter vírgula para ponto se necessário
+      const amountValue = formData.amount.replace(",", ".");
       await updateMutation.mutateAsync({
         id: editingExpense.expense.id,
         establishment: formData.establishment,
-        amount: Math.round(Number(formData.amount) * 100),
+        amount: Math.round(Number(amountValue) * 100),
         categoryId: Number(formData.categoryId),
         purchaseDate: new Date(formData.purchaseDate),
         paid: formData.paid,
@@ -301,8 +307,10 @@ export default function Expenses() {
       toast.error("Preencha todos os campos obrigatórios");
       return;
     }
+    // Converter vírgula para ponto se necessário
+    const amountValue = formData.amount.replace(",", ".");
     const totalInstallments = formData.totalInstallments || 1;
-    const amountPerInstallment = Math.round(Number(formData.amount) * 100) / totalInstallments;
+    const amountPerInstallment = Math.round(Number(amountValue) * 100) / totalInstallments;
     
     for (let i = 1; i <= totalInstallments; i++) {
       const installmentDate = new Date(formData.purchaseDate);
