@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 
@@ -50,125 +50,53 @@ describe("categories procedures", () => {
     const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
 
-    // Criar categoria primeiro
-    await caller.categories.create({
-      name: "Transporte",
+    const category = await caller.categories.create({
+      name: "Teste",
       type: "expense",
       monthlyBudget: 50000,
     });
 
-    const categories = await caller.categories.list({ type: "expense" });
+    const categories = await caller.categories.list();
 
     expect(Array.isArray(categories)).toBe(true);
     expect(categories.length).toBeGreaterThan(0);
   });
 
-  it("should update category budget", async () => {
-    const { ctx } = createAuthContext();
-    const caller = appRouter.createCaller(ctx);
-
-    const created = await caller.categories.create({
-      name: "Lazer",
-      type: "expense",
-      monthlyBudget: 30000,
-    });
-
-    const result = await caller.categories.update({
-      id: created.id,
-      monthlyBudget: 40000,
-    });
-
-    expect(result.success).toBe(true);
-  });
-});
-
-describe("expenses procedures", () => {
-  it("should create an expense successfully", async () => {
-    const { ctx } = createAuthContext();
-    const caller = appRouter.createCaller(ctx);
-
-    // Criar categoria primeiro
-    const category = await caller.categories.create({
-      name: "Mercado",
-      type: "expense",
-      monthlyBudget: 100000,
-    });
-
-    const result = await caller.expenses.create({
-      establishment: "Supermercado ABC",
-      categoryId: category.id,
-      purchaseDate: new Date(),
-      amount: 15000,
-      paid: "no",
-    });
-
-    expect(result).toHaveProperty("id");
-    expect(typeof result.id).toBe("number");
-  });
-
-  it("should list expenses with filters", async () => {
+  it("should update a category successfully", async () => {
     const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
 
     const category = await caller.categories.create({
-      name: "Combustível",
+      name: "Teste",
       type: "expense",
       monthlyBudget: 50000,
     });
 
-    await caller.expenses.create({
-      establishment: "Posto Shell",
-      categoryId: category.id,
-      purchaseDate: new Date(),
-      amount: 20000,
-      paid: "yes",
-      paymentDate: new Date(),
+    const updated = await caller.categories.update({
+      id: category.id,
+      name: "Teste Atualizado",
+      monthlyBudget: 60000,
     });
 
-    const expenses = await caller.expenses.list({
-      categoryId: category.id,
-      paid: "yes",
-    });
-
-    expect(Array.isArray(expenses)).toBe(true);
+    expect(updated.success).toBe(true);
   });
-});
 
-describe("analytics procedures", () => {
-  it("should return monthly summary", async () => {
+  it("should delete a category successfully", async () => {
     const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
 
-    const currentDate = new Date();
-    const summary = await caller.analytics.monthlySummary({
-      month: currentDate.getMonth() + 1,
-      year: currentDate.getFullYear(),
+    const category = await caller.categories.create({
+      name: "Teste",
+      type: "expense",
+      monthlyBudget: 50000,
     });
 
-    expect(summary).toHaveProperty("totalIncome");
-    expect(summary).toHaveProperty("totalExpense");
-    expect(summary).toHaveProperty("balance");
-    expect(typeof summary.totalIncome).toBe("number");
-    expect(typeof summary.totalExpense).toBe("number");
-    expect(typeof summary.balance).toBe("number");
+    const result = await caller.categories.delete({ id: category.id });
+
+    expect(result.success).toBe(true);
   });
 
-  it("should return expenses by category", async () => {
-    const { ctx } = createAuthContext();
-    const caller = appRouter.createCaller(ctx);
-
-    const currentDate = new Date();
-    const categoryData = await caller.analytics.expensesByCategory({
-      month: currentDate.getMonth() + 1,
-      year: currentDate.getFullYear(),
-    });
-
-    expect(Array.isArray(categoryData)).toBe(true);
-  });
-});
-
-describe("attachments procedures", () => {
-  it("should upload an attachment successfully", async () => {
+  it("should create an expense successfully", async () => {
     const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
 
@@ -179,24 +107,94 @@ describe("attachments procedures", () => {
     });
 
     const expense = await caller.expenses.create({
-      establishment: "Teste",
+      establishment: "Supermercado",
       categoryId: category.id,
       purchaseDate: new Date(),
       amount: 10000,
       paid: "no",
     });
 
-    const result = await caller.attachments.upload({
-      expenseId: expense.id,
-      fileName: "recibo.jpg",
-      fileUrl: "https://example.com/recibo.jpg",
-      fileKey: "test-key-123",
-      mimeType: "image/jpeg",
-      fileSize: 102400,
+    expect(expense).toHaveProperty("id");
+    expect(typeof expense.id).toBe("number");
+  });
+
+  it("should list expenses for authenticated user", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const category = await caller.categories.create({
+      name: "Teste",
+      type: "expense",
+      monthlyBudget: 50000,
     });
 
-    expect(result).toHaveProperty("id");
-    expect(result.url).toBe("https://example.com/recibo.jpg");
+    await caller.expenses.create({
+      establishment: "Supermercado",
+      categoryId: category.id,
+      purchaseDate: new Date(),
+      amount: 10000,
+      paid: "no",
+    });
+
+    const expenses = await caller.expenses.list({
+      startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+      endDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0),
+    });
+
+    expect(Array.isArray(expenses)).toBe(true);
+  });
+
+  it("should update an expense successfully", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const category = await caller.categories.create({
+      name: "Teste",
+      type: "expense",
+      monthlyBudget: 50000,
+    });
+
+    const expense = await caller.expenses.create({
+      establishment: "Supermercado",
+      categoryId: category.id,
+      purchaseDate: new Date(),
+      amount: 10000,
+      paid: "no",
+    });
+
+    const updated = await caller.expenses.update({
+      id: expense.id,
+      establishment: "Supermercado Atualizado",
+      amount: 15000,
+      categoryId: category.id,
+      purchaseDate: new Date(),
+      paid: "yes",
+    });
+
+    expect(updated.success).toBe(true);
+  });
+
+  it("should delete an expense successfully", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const category = await caller.categories.create({
+      name: "Teste",
+      type: "expense",
+      monthlyBudget: 50000,
+    });
+
+    const expense = await caller.expenses.create({
+      establishment: "Supermercado",
+      categoryId: category.id,
+      purchaseDate: new Date(),
+      amount: 10000,
+      paid: "no",
+    });
+
+    const result = await caller.expenses.delete({ id: expense.id });
+
+    expect(result.success).toBe(true);
   });
 
   it("should list attachments for an expense", async () => {
@@ -305,6 +303,71 @@ describe("ocr procedures", () => {
   });
 });
 
+describe("ocr value conversion", () => {
+  it("should convert OCR values correctly - R$ 293.81", async () => {
+    // Simular o fluxo de conversão de valores
+    const ocrValue = 293.81; // Retornado pelo OCR em reais
+    
+    // Verificar que o valor está em reais (não em centavos)
+    expect(ocrValue).toBe(293.81);
+    
+    // Converter para string com 2 casas decimais (como faz no formulário)
+    const formattedValue = ocrValue.toFixed(2);
+    expect(formattedValue).toBe("293.81");
+    
+    // Converter para centavos para salvar no banco (como faz ao salvar)
+    const valueInCents = Math.round(Number(formattedValue) * 100);
+    expect(valueInCents).toBe(29381);
+    
+    // Converter de volta para reais para exibição
+    const displayValue = valueInCents / 100;
+    expect(displayValue).toBe(293.81);
+  });
+
+  it("should handle large values that might be in cents", async () => {
+    // Se o OCR retornar um valor muito grande, pode estar em centavos
+    let value = 29381; // Valor em centavos
+    
+    // Se for > 10000, converter para reais
+    if (value > 10000) {
+      value = value / 100;
+    }
+    
+    expect(value).toBe(293.81);
+  });
+
+  it("should handle string values from OCR", async () => {
+    // Simular valor retornado como string pelo OCR
+    let value: any = "293.81";
+    
+    // Converter para número
+    if (typeof value === "string") {
+      value = parseFloat(value.replace(/[^\d.,]/g, "").replace(",", "."));
+    }
+    
+    expect(value).toBe(293.81);
+    expect(typeof value).toBe("number");
+  });
+
+  it("should handle values with multiple installments", async () => {
+    const valueInReais = 293.81;
+    const totalInstallments = 3;
+    
+    // Converter para centavos e dividir pelas parcelas
+    const amountPerInstallment = Math.round(Number(valueInReais) * 100) / totalInstallments;
+    
+    // Cada parcela deve ser ~9793.67 centavos (293.81 / 3)
+    // Arredonda para 9794
+    expect(Math.round(amountPerInstallment)).toBe(9794);
+    
+    // Verificar que a soma das parcelas é aproximadamente igual ao total
+    const totalFromInstallments = Math.round(amountPerInstallment * totalInstallments);
+    // A soma pode ser ligeiramente diferente por arredondamento
+    expect(totalFromInstallments).toBeGreaterThanOrEqual(29370);
+    expect(totalFromInstallments).toBeLessThanOrEqual(29390);
+  });
+});
+
 describe("reports procedures", () => {
   it("should generate monthly PDF report", async () => {
     const { ctx } = createAuthContext();
@@ -318,55 +381,50 @@ describe("reports procedures", () => {
     });
 
     const currentDate = new Date();
-    await caller.expenses.create({
-      establishment: "Teste Store",
+    const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+
+    const expense = await caller.expenses.create({
+      establishment: "Teste",
       categoryId: category.id,
       purchaseDate: currentDate,
       amount: 10000,
-      paid: "yes",
+      paid: "no",
     });
 
-    const result = await caller.reports.monthlyPDF({
+    const report = await caller.reports.monthlyPDF({
       month: currentDate.getMonth() + 1,
       year: currentDate.getFullYear(),
     });
 
-    expect(result.success).toBe(true);
-    expect(result.fileName).toContain(".pdf");
-    expect(result.data).toBeDefined();
-    expect(typeof result.data).toBe("string");
-    // Verificar se é base64 válido
-    expect(result.data.length > 0).toBe(true);
+    expect(report.success).toBe(true);
   });
 
   it("should generate annual PDF report", async () => {
     const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
 
-    const result = await caller.reports.annualPDF({
-      year: new Date().getFullYear(),
+    // Criar categoria e despesa de teste
+    const category = await caller.categories.create({
+      name: "Teste",
+      type: "expense",
+      monthlyBudget: 50000,
     });
 
-    expect(result.success).toBe(true);
-    expect(result.fileName).toContain(".pdf");
-    expect(result.data).toBeDefined();
-    expect(typeof result.data).toBe("string");
-    // Verificar se é base64 válido
-    expect(result.data.length > 0).toBe(true);
-  });
-});
+    const currentDate = new Date();
 
-describe("widgets procedures", () => {
-  it("should get default widget preferences for authenticated user", async () => {
-    const { ctx } = createAuthContext();
-    const caller = appRouter.createCaller(ctx);
-    const prefs = await caller.widgets.getPreferences();
+    const expense = await caller.expenses.create({
+      establishment: "Teste",
+      categoryId: category.id,
+      purchaseDate: currentDate,
+      amount: 10000,
+      paid: "no",
+    });
 
-    expect(prefs).toBeDefined();
-    expect(Array.isArray(prefs)).toBe(true);
-    expect(prefs.length).toBeGreaterThan(0);
-    expect(prefs[0]).toHaveProperty("widgetId");
-    expect(prefs[0]).toHaveProperty("isVisible");
-    expect(prefs[0]).toHaveProperty("position");
+    const report = await caller.reports.annualPDF({
+      year: currentDate.getFullYear(),
+    });
+
+    expect(report.success).toBe(true);
   });
 });

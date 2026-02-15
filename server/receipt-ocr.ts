@@ -94,11 +94,18 @@ FORMATO DE RESPOSTA - Retorne APENAS JSON válido, sem explicações:
       throw new Error("Falha ao processar resposta do LLM");
     }
 
-    // Normalizar valores
+    // Normalizar valores - SEMPRE em reais (não em centavos)
     let value = extractedData.value;
     if (typeof value === "string") {
       // Remover símbolos de moeda e espaços
       value = parseFloat(value.replace(/[^\d.,]/g, "").replace(",", "."));
+    }
+    
+    // Se o valor for muito grande (> 10000), pode estar em centavos
+    // Converter para reais dividindo por 100
+    if (typeof value === "number" && value > 10000) {
+      console.log(`[OCR] Valor ${value} parece estar em centavos, convertendo para reais`);
+      value = value / 100;
     }
 
     let date = extractedData.date;

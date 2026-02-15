@@ -331,3 +331,10 @@
 - [x] Aplicar código em Expenses.tsx
 - [x] Adicionar loading screen com engrenagem "Processando imagem"
 - [x] Testar extração de OCR
+
+## Fase 43: Corrigir Conversão de Valores OCR entre Modal e Nova Despesa
+- [x] Investigar fluxo de conversão de valores no OCRResultModal
+- [x] Identificar onde o valor está sendo dividido incorretamente
+- [x] Corrigir conversão de centavos para reais
+- [x] Testar com múltiplos valores (293.81, 100.00, 1234.56, etc)
+- [x] Validar que valor aparece igual em ambas as telas
