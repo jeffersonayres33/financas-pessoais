@@ -46,6 +46,8 @@ export default function Expenses() {
     purchaseDate: new Date().toISOString().split("T")[0],
     paid: "no" as "yes" | "no",
     paymentDate: "",
+    totalInstallments: 1,
+    currentInstallment: 1,
   });
 
   const startDate = useMemo(() => {
@@ -151,6 +153,8 @@ export default function Expenses() {
       paymentDate: expense.expense.paymentDate
         ? new Date(expense.expense.paymentDate).toISOString().split("T")[0]
         : "",
+      totalInstallments: expense.expense.totalInstallments || 1,
+      currentInstallment: expense.expense.currentInstallment || 1,
     });
     setIsDialogOpen(true);
   };
@@ -164,6 +168,8 @@ export default function Expenses() {
       purchaseDate: new Date().toISOString().split("T")[0],
       paid: "no" as "yes" | "no",
       paymentDate: "",
+      totalInstallments: 1,
+      currentInstallment: 1,
     });
     setIsDialogOpen(true);
   };
@@ -198,6 +204,8 @@ export default function Expenses() {
         purchaseDate: new Date().toISOString().split("T")[0],
         paid: "no" as "yes" | "no",
         paymentDate: "",
+        totalInstallments: 1,
+        currentInstallment: 1,
       });
     }
   };
@@ -207,14 +215,24 @@ export default function Expenses() {
       toast.error("Preencha todos os campos obrigatórios");
       return;
     }
-    await createMutation.mutateAsync({
-      establishment: formData.establishment,
-      amount: Math.round(Number(formData.amount) * 100),
-      categoryId: Number(formData.categoryId),
-      purchaseDate: new Date(formData.purchaseDate),
-      paid: formData.paid,
-      paymentDate: formData.paid === "yes" && formData.paymentDate ? new Date(formData.paymentDate) : undefined,
-    });
+    const totalInstallments = formData.totalInstallments || 1;
+    const amountPerInstallment = Math.round(Number(formData.amount) * 100) / totalInstallments;
+    
+    for (let i = 1; i <= totalInstallments; i++) {
+      const installmentDate = new Date(formData.purchaseDate);
+      installmentDate.setMonth(installmentDate.getMonth() + (i - 1));
+      
+      await createMutation.mutateAsync({
+        establishment: formData.establishment,
+        amount: Math.round(amountPerInstallment),
+        categoryId: Number(formData.categoryId),
+        purchaseDate: installmentDate,
+        paid: formData.paid,
+        paymentDate: formData.paid === "yes" && formData.paymentDate ? new Date(formData.paymentDate) : undefined,
+        totalInstallments,
+        currentInstallment: i,
+      });
+    }
     setIsDialogOpen(false);
     setFormData({
       establishment: "",
@@ -223,6 +241,8 @@ export default function Expenses() {
       purchaseDate: new Date().toISOString().split("T")[0],
       paid: "no" as "yes" | "no",
       paymentDate: "",
+      totalInstallments: 1,
+      currentInstallment: 1,
     });
   };
 
@@ -506,6 +526,22 @@ export default function Expenses() {
                   onChange={(e) => setFormData({ ...formData, paymentDate: e.target.value })}
                   className="mt-2"
                 />
+              </div>
+            )}
+
+            {!editingExpense && (
+              <div>
+                <Label>Parcelas</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="12"
+                  value={formData.totalInstallments}
+                  onChange={(e) => setFormData({ ...formData, totalInstallments: Number(e.target.value) })}
+                  placeholder="1"
+                  className="mt-2"
+                />
+                <p className="text-xs text-gray-500 mt-1">Número de parcelas (máximo 12)</p>
               </div>
             )}
 

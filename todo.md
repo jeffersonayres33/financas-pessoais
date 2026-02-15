@@ -308,3 +308,9 @@
 - [x] Fechar diálogo Nova Despesa ao iniciar extração
 - [x] Reabrir diálogo com dados preenchidos após confirmar OCR
 - [x] Testar fluxo completo de OCR
+
+## Fase 39: Restaurar Funcionalidade de Parcelamento em Nova Despesa
+- [x] Verificar campos de parcelamento em Expenses.tsx
+- [x] Restaurar campo de número de parcelas
+- [x] Restaurar lógica de criação de parcelas
+- [x] Testar parcelamento com múltiplas parcelas
