@@ -1,4 +1,4 @@
-
+import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { ExpenseAttachmentUploadWithOCR } from "@/components/ExpenseAttachmentUploadWithOCR";
 import ReceiptUploader from "@/components/ReceiptUploader";
@@ -21,45 +21,45 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { trpc } from "@/lib/trpc";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Check, Filter, Pencil, Plus, Trash2, X, Loader } from "lucide-react";
+import { Check, Filter, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { useAuth } from "@/_core/hooks/useAuth";
 
 export default function Expenses() {
   const { user } = useAuth();
-  
-  // Estados para filtros
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<any>(null);
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterPaid, setFilterPaid] = useState<string>("all");
-  const [filterInstallments, setFilterInstallments] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("date-new");
-  const [editingExpense, setEditingExpense] = useState<any>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [filterInstallments, setFilterInstallments] = useState<string>("all");
+  const [showOCRModal, setShowOCRModal] = useState(false);
   const [ocrResult, setOcrResult] = useState<ExtractedReceiptData | null>(null);
   const [ocrImagePreview, setOcrImagePreview] = useState<string>("");
-  const [showOCRModal, setShowOCRModal] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
+  
+  const currentDate = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
+
   const [formData, setFormData] = useState({
     establishment: "",
-    amount: "",
     categoryId: "",
-    purchaseDate: new Date().toISOString().split("T")[0],
+    purchaseDate: format(new Date(), "yyyy-MM-dd"),
+    amount: "",
     paid: "no" as "yes" | "no",
     paymentDate: "",
-    totalInstallments: 1,
-    currentInstallment: 1,
+    installments: 1,
   });
 
-  const startDate = useMemo(() => {
-    return new Date(selectedYear, selectedMonth - 1, 1);
-  }, [selectedMonth, selectedYear]);
-
-  const endDate = useMemo(() => {
-    return new Date(selectedYear, selectedMonth, 0);
-  }, [selectedMonth, selectedYear]);
+  const startDate = useMemo(
+    () => new Date(selectedYear, selectedMonth - 1, 1),
+    [selectedYear, selectedMonth]
+  );
+  const endDate = useMemo(
+    () => new Date(selectedYear, selectedMonth, 0, 23, 59, 59),
+    [selectedYear, selectedMonth]
+  );
 
   const { data: expenses, isLoading } = trpc.expenses.list.useQuery(
     {
@@ -68,27 +68,47 @@ export default function Expenses() {
       ...(filterCategory !== "all" && { categoryId: Number(filterCategory) }),
       ...(filterPaid !== "all" && { paid: filterPaid as "yes" | "no" }),
     },
-    { enabled: !!user }
+    { enabled: !!user?.id }
   );
 
-  const { data: categories } = trpc.categories.list.useQuery(undefined, { enabled: !!user });
+  const { data: categories } = trpc.categories.list.useQuery({ type: "expense" }, { enabled: !!user?.id });
   const utils = trpc.useUtils();
-  const deleteMutation = trpc.expenses.delete.useMutation({
-    onSuccess: () => {
-      utils.expenses.list.invalidate();
-      toast.success("Despesa deletada com sucesso");
-    },
-  });
-  const updateMutation = trpc.expenses.update.useMutation({
-    onSuccess: () => {
-      utils.expenses.list.invalidate();
-      toast.success("Despesa atualizada com sucesso");
-    },
-  });
+
   const createMutation = trpc.expenses.create.useMutation({
     onSuccess: () => {
       utils.expenses.list.invalidate();
-      toast.success("Despesa criada com sucesso");
+      utils.analytics.monthlySummary.invalidate();
+      utils.analytics.expensesByCategory.invalidate();
+      toast.success("Despesa criada com sucesso!");
+      resetForm();
+    },
+    onError: (error) => {
+      toast.error("Erro ao criar despesa: " + error.message);
+    },
+  });
+
+  const updateMutation = trpc.expenses.update.useMutation({
+    onSuccess: () => {
+      utils.expenses.list.invalidate();
+      utils.analytics.monthlySummary.invalidate();
+      utils.analytics.expensesByCategory.invalidate();
+      toast.success("Despesa atualizada com sucesso!");
+      resetForm();
+    },
+    onError: (error) => {
+      toast.error("Erro ao atualizar despesa: " + error.message);
+    },
+  });
+
+  const deleteMutation = trpc.expenses.delete.useMutation({
+    onSuccess: () => {
+      utils.expenses.list.invalidate();
+      utils.analytics.monthlySummary.invalidate();
+      utils.analytics.expensesByCategory.invalidate();
+      toast.success("Despesa excluída com sucesso!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao excluir despesa: " + error.message);
     },
   });
 
@@ -116,95 +136,21 @@ export default function Expenses() {
     },
   });
 
-  const months = [
-    { value: 1, label: "Janeiro" },
-    { value: 2, label: "Fevereiro" },
-    { value: 3, label: "Março" },
-    { value: 4, label: "Abril" },
-    { value: 5, label: "Maio" },
-    { value: 6, label: "Junho" },
-    { value: 7, label: "Julho" },
-    { value: 8, label: "Agosto" },
-    { value: 9, label: "Setembro" },
-    { value: 10, label: "Outubro" },
-    { value: 11, label: "Novembro" },
-    { value: 12, label: "Dezembro" },
-  ];
-
-  const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
-
-  const formatCurrency = (cents: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(cents / 100);
-  };
-
-  const totalExpenses = useMemo(() => {
-    return expenses?.reduce((sum, exp) => sum + exp.expense.amount, 0) || 0;
-  }, [expenses]);
-
-  const filteredExpenses = useMemo(() => {
-    if (!expenses) return [];
-    let filtered = [...expenses];
-    if (filterInstallments === "installments") {
-      filtered = filtered.filter((e) => e.expense.totalInstallments > 1);
-    } else if (filterInstallments === "no-installments") {
-      filtered = filtered.filter((e) => e.expense.totalInstallments === 1);
-    }
-    return filtered;
-  }, [expenses, filterInstallments]);
-
-  const sortedExpenses = useMemo(() => {
-    if (!filteredExpenses) return [];
-    let sorted = [...filteredExpenses];
-    if (sortBy === "date-new") return sorted.reverse();
-    if (sortBy === "date-old") return sorted;
-    if (sortBy === "alpha-az")
-      return sorted.sort((a, b) => a.expense.establishment.localeCompare(b.expense.establishment));
-    if (sortBy === "alpha-za")
-      return sorted.sort((a, b) => b.expense.establishment.localeCompare(a.expense.establishment));
-    if (sortBy === "value-asc") return sorted.sort((a, b) => a.expense.amount - b.expense.amount);
-    if (sortBy === "value-desc") return sorted.sort((a, b) => b.expense.amount - a.expense.amount);
-    return sorted;
-  }, [filteredExpenses, sortBy]);
-
-  const handleEdit = (expense: any) => {
-    setEditingExpense(expense);
-    setFormData({
-      establishment: expense.expense.establishment,
-      amount: (expense.expense.amount / 100).toString(),
-      categoryId: expense.category?.id?.toString() || "",
-      purchaseDate: new Date(expense.expense.purchaseDate).toISOString().split("T")[0],
-      paid: expense.expense.paid,
-      paymentDate: expense.expense.paymentDate
-        ? new Date(expense.expense.paymentDate).toISOString().split("T")[0]
-        : "",
-      totalInstallments: expense.expense.totalInstallments || 1,
-      currentInstallment: expense.expense.currentInstallment || 1,
-    });
-    setIsDialogOpen(true);
-  };
-
-  const handleNewExpense = () => {
-    setEditingExpense(null);
+  const resetForm = () => {
     setFormData({
       establishment: "",
-      amount: "",
       categoryId: "",
-      purchaseDate: new Date().toISOString().split("T")[0],
-      paid: "no" as "yes" | "no",
+      purchaseDate: format(new Date(), "yyyy-MM-dd"),
+      amount: "",
+      paid: "no",
       paymentDate: "",
-      totalInstallments: 1,
-      currentInstallment: 1,
+      installments: 1,
     });
-    setIsDialogOpen(true);
-  };
-
-  const handleDelete = async (id: number) => {
-    if (confirm("Tem certeza que deseja deletar esta despesa?")) {
-      await deleteMutation.mutateAsync({ id });
-    }
+    setEditingExpense(null);
+    setIsDialogOpen(false);
+    setShowOCRModal(false);
+    setOcrResult(null);
+    setOcrImagePreview("");
   };
 
   const handleReceiptImageSelected = async (file: File, preview: string) => {
@@ -238,11 +184,7 @@ export default function Expenses() {
       setFormData((prev) => ({ ...prev, establishment: data.establishment || "" }));
     }
     if (data.value) {
-      // Converter valor para string com vírgula como separador decimal
-      // OCR retorna: 293.81 (número em reais com ponto)
-      // Converter para: "293,81" (string com vírgula para exibição no input)
-      const valueWithComma = data.value!.toFixed(2).replace(".", ",");
-      setFormData((prev) => ({ ...prev, amount: valueWithComma }));
+      setFormData((prev) => ({ ...prev, amount: data.value!.toFixed(2) }));
     }
     if (data.date) {
       setFormData((prev) => ({ ...prev, purchaseDate: data.date || prev.purchaseDate }));
@@ -252,445 +194,393 @@ export default function Expenses() {
     setIsDialogOpen(true);
   };
 
-  const resetForm = () => {
-    setFormData({
-      establishment: "",
-      categoryId: "",
-      purchaseDate: new Date().toISOString().split("T")[0],
-      amount: "",
-      paid: "no" as "yes" | "no",
-      paymentDate: "",
-      totalInstallments: 1,
-      currentInstallment: 1,
-    });
-    setEditingExpense(null);
-    setIsDialogOpen(false);
-    setShowOCRModal(false);
-    setOcrResult(null);
-    setOcrImagePreview("");
-  }
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const amountInCents = Math.round(parseFloat(formData.amount) * 100);
 
-  const handleSaveEdit = async () => {
-    if (!formData.establishment || !formData.amount || !formData.categoryId) {
-      toast.error("Preencha todos os campos obrigatórios");
-      return;
-    }
+    const data = {
+      establishment: formData.establishment,
+      categoryId: Number(formData.categoryId),
+      purchaseDate: new Date(formData.purchaseDate),
+      amount: amountInCents,
+      paid: formData.paid,
+      ...(formData.paymentDate && { paymentDate: new Date(formData.paymentDate) }),
+    };
+
     if (editingExpense) {
-      // Converter vírgula para ponto se necessário
-      const amountValue = formData.amount.replace(",", ".");
-      await updateMutation.mutateAsync({
-        id: editingExpense.expense.id,
-        establishment: formData.establishment,
-        amount: Math.round(Number(amountValue) * 100),
-        categoryId: Number(formData.categoryId),
-        purchaseDate: new Date(formData.purchaseDate),
-        paid: formData.paid,
-        paymentDate: formData.paid === "yes" && formData.paymentDate ? new Date(formData.paymentDate) : undefined,
-      });
-      setIsDialogOpen(false);
-      setEditingExpense(null);
-      setFormData({
-        establishment: "",
-        amount: "",
-        categoryId: "",
-        purchaseDate: new Date().toISOString().split("T")[0],
-        paid: "no" as "yes" | "no",
-        paymentDate: "",
-        totalInstallments: 1,
-        currentInstallment: 1,
-      });
+      updateMutation.mutate({ id: editingExpense.expense.id, ...data, purchaseDate: new Date(formData.purchaseDate), totalInstallments: formData.installments || 1, currentInstallment: 1 });
+    } else {
+      const startDate = new Date(formData.purchaseDate);
+      const installments = formData.installments || 1;
+      for (let i = 0; i < installments; i++) {
+        const expenseDate = new Date(startDate);
+        expenseDate.setMonth(expenseDate.getMonth() + i);
+        createMutation.mutate({
+          ...data,
+          purchaseDate: expenseDate,
+          totalInstallments: installments,
+          currentInstallment: i + 1,
+        });
+      }
     }
   };
 
-  const handleSaveNew = async () => {
-    if (!formData.establishment || !formData.amount || !formData.categoryId) {
-      toast.error("Preencha todos os campos obrigatórios");
-      return;
-    }
-    // Converter vírgula para ponto se necessário
-    const amountValue = formData.amount.replace(",", ".");
-    const totalInstallments = formData.totalInstallments || 1;
-    const amountPerInstallment = Math.round(Number(amountValue) * 100) / totalInstallments;
-    
-    for (let i = 1; i <= totalInstallments; i++) {
-      const installmentDate = new Date(formData.purchaseDate);
-      installmentDate.setMonth(installmentDate.getMonth() + (i - 1));
-      
-      await createMutation.mutateAsync({
-        establishment: formData.establishment,
-        amount: Math.round(amountPerInstallment),
-        categoryId: Number(formData.categoryId),
-        purchaseDate: installmentDate,
-        paid: formData.paid,
-        paymentDate: formData.paid === "yes" && formData.paymentDate ? new Date(formData.paymentDate) : undefined,
-        totalInstallments,
-        currentInstallment: i,
-      });
-    }
-    setIsDialogOpen(false);
+  const handleEdit = (expense: any) => {
+    setEditingExpense(expense);
     setFormData({
-      establishment: "",
-      amount: "",
-      categoryId: "",
-      purchaseDate: new Date().toISOString().split("T")[0],
-      paid: "no" as "yes" | "no",
-      paymentDate: "",
-      totalInstallments: 1,
-      currentInstallment: 1,
+      establishment: expense.expense.establishment,
+      categoryId: expense.expense.categoryId.toString(),
+      purchaseDate: format(new Date(expense.expense.purchaseDate), "yyyy-MM-dd"),
+      amount: (expense.expense.amount / 100).toFixed(2),
+      paid: expense.expense.paid,
+      paymentDate: expense.expense.paymentDate
+        ? format(new Date(expense.expense.paymentDate), "yyyy-MM-dd")
+        : "",
+      installments: 1,
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = (id: number) => {
+    if (confirm("Tem certeza que deseja excluir esta despesa?")) {
+      deleteMutation.mutate({ id });
+    }
+  };
+
+  const togglePaid = (expense: any) => {
+    const newPaid = expense.expense.paid === "yes" ? "no" : "yes";
+    updateMutation.mutate({
+      id: expense.expense.id,
+      paid: newPaid,
+      ...(newPaid === "yes" && { paymentDate: new Date() }),
     });
   };
+
+  const formatCurrency = (cents: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(cents / 100);
+  };
+
+  const totalExpenses = useMemo(() => {
+    return expenses?.reduce((sum, exp) => sum + exp.expense.amount, 0) || 0;
+  }, [expenses]);
+
+  const sortedExpenses = useMemo(() => {
+    if (!expenses) return [];
+    let sorted = [...expenses];
+    
+    if (filterInstallments === "installments") {
+      sorted = sorted.filter((e) => e.expense.totalInstallments > 1);
+    } else if (filterInstallments === "no-installments") {
+      sorted = sorted.filter((e) => e.expense.totalInstallments === 1);
+    }
+    if (sortBy === "date-new") return sorted.sort((a, b) => new Date(b.expense.purchaseDate).getTime() - new Date(a.expense.purchaseDate).getTime());
+    if (sortBy === "date-old") return sorted.sort((a, b) => new Date(a.expense.purchaseDate).getTime() - new Date(b.expense.purchaseDate).getTime());
+    if (sortBy === "alpha-az") return sorted.sort((a, b) => a.expense.establishment.localeCompare(b.expense.establishment));
+    if (sortBy === "alpha-za") return sorted.sort((a, b) => b.expense.establishment.localeCompare(a.expense.establishment));
+    if (sortBy === "value-asc") return sorted.sort((a, b) => a.expense.amount - b.expense.amount);
+    if (sortBy === "value-desc") return sorted.sort((a, b) => b.expense.amount - a.expense.amount);
+    return sorted;
+  }, [expenses, sortBy, filterInstallments]);
+
+  const months = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+  ];
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Despesas</h1>
-            <p className="text-gray-600 mt-1">Gerencie suas despesas e acompanhe gastos</p>
-          </div>
-          <Button onClick={handleNewExpense} className="gap-2 w-full sm:w-auto">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Despesas</h1>
+          <Button onClick={() => setIsDialogOpen(true)} className="gap-2">
             <Plus className="w-4 h-4" />
             Nova Despesa
           </Button>
         </div>
 
-        {/* Filtros */}
+        {/* Filtros e Ordenação */}
         <Card>
           <CardContent className="pt-6">
-            <div className="flex flex-col gap-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">Mês</Label>
-                  <select
-                    value={selectedMonth}
-                    onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                    className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {months.map((month) => (
-                      <option key={month.value} value={month.value}>
-                        {month.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">Ano</Label>
-                  <select
-                    value={selectedYear}
-                    onChange={(e) => setSelectedYear(Number(e.target.value))}
-                    className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {years.map((year) => (
-                      <option key={year} value={year}>
-                        {year}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">Categorias</Label>
-                  <select
-                    value={filterCategory}
-                    onChange={(e) => setFilterCategory(e.target.value)}
-                    className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="all">Todas</option>
-                    {categories?.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">Status</Label>
-                  <select
-                    value={filterPaid}
-                    onChange={(e) => setFilterPaid(e.target.value)}
-                    className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="all">Todos</option>
-                    <option value="yes">Pago</option>
-                    <option value="no">Não Pago</option>
-                  </select>
-                </div>
-
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">Parcelados</Label>
-                  <select
-                    value={filterInstallments}
-                    onChange={(e) => setFilterInstallments(e.target.value)}
-                    className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="all">Todos</option>
-                    <option value="installments">Parcelados</option>
-                    <option value="no-installments">Não Parcelados</option>
-                  </select>
-                </div>
-
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">Ordenar por</Label>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="date-new">Data: Mais Novo</option>
-                    <option value="date-old">Data: Mais Velho</option>
-                    <option value="alpha-az">Alfabético: A-Z</option>
-                    <option value="alpha-za">Alfabético: Z-A</option>
-                    <option value="value-asc">Valor: Menor para Maior</option>
-                    <option value="value-desc">Valor: Maior para Menor</option>
-                  </select>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div>
+                <Label className="text-sm">Mês</Label>
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg"
+                >
+                  {months.map((month, index) => (
+                    <option key={index} value={index + 1}>{month}</option>
+                  ))}
+                </select>
               </div>
-
-              <Button variant="outline" className="gap-2 w-full sm:w-auto">
-                <Filter className="w-4 h-4" />
-                Filtrar
-              </Button>
+              <div>
+                <Label className="text-sm">Ano</Label>
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(Number(e.target.value))}
+                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg"
+                >
+                  {[2024, 2025, 2026].map((year) => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Label className="text-sm">Categoria</Label>
+                <select
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg"
+                >
+                  <option value="all">Todas</option>
+                  {categories?.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Label className="text-sm">Status</Label>
+                <select
+                  value={filterPaid}
+                  onChange={(e) => setFilterPaid(e.target.value)}
+                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg"
+                >
+                  <option value="all">Todos</option>
+                  <option value="yes">Pagos</option>
+                  <option value="no">Não Pagos</option>
+                </select>
+              </div>
+              <div>
+                <Label className="text-sm">Ordenar por</Label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg"
+                >
+                  <option value="date-new">Data (Recente)</option>
+                  <option value="date-old">Data (Antigo)</option>
+                  <option value="alpha-az">A-Z</option>
+                  <option value="alpha-za">Z-A</option>
+                  <option value="value-asc">Valor (Menor)</option>
+                  <option value="value-desc">Valor (Maior)</option>
+                </select>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Despesas */}
+        {/* Resumo */}
         <Card>
           <CardContent className="pt-6">
-            {isLoading ? (
-              <div className="text-center py-8">Carregando...</div>
-            ) : sortedExpenses.length > 0 ? (
-              <div className="space-y-3">
-                {sortedExpenses.map((expense) => (
-                  <div
-                    key={expense.expense.id}
-                    className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                        <p className="font-medium truncate">{expense.expense.establishment}</p>
-                        {expense.expense.totalInstallments > 1 && (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
-                            parcelado {expense.expense.currentInstallment}/{expense.expense.totalInstallments}
-                          </span>
-                        )}
-                        {expense.expense.paid === "yes" && (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded">
-                            <Check className="w-3 h-3" />
-                            Pago
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex flex-wrap items-center gap-1 text-xs sm:text-sm text-muted-foreground">
-                        <span className="truncate">{expense.category?.name}</span>
-                        <span className="hidden sm:inline">•</span>
-                        <span>
-                          {format(new Date(expense.expense.purchaseDate), "dd/MM/yyyy", { locale: ptBR })}
-                        </span>
-                        {expense.expense.paid === "yes" && expense.expense.paymentDate && (
-                          <>
-                            <span className="hidden sm:inline">•</span>
-                            <span className="text-green-600">
-                              Pago em {format(new Date(expense.expense.paymentDate), "dd/MM/yyyy", { locale: ptBR })}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </div>
+            <div className="text-right">
+              <p className="text-sm text-gray-600">Total do período</p>
+              <p className="text-3xl font-bold text-red-600">{formatCurrency(totalExpenses)}</p>
+            </div>
+          </CardContent>
+        </Card>
 
-                    <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
-                      <p className="text-base sm:text-lg font-semibold flex-shrink-0">
-                        {formatCurrency(expense.expense.amount)}
-                      </p>
-                      <div className="flex gap-1 sm:gap-2 flex-shrink-0">
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(expense)} title="Editar">
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(expense.expense.id)}
-                          disabled={deleteMutation.isPending}
-                          title="Deletar"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+        {/* Lista de Despesas */}
+        <div className="space-y-3">
+          {isLoading ? (
+            <p className="text-center text-gray-500">Carregando...</p>
+          ) : sortedExpenses.length === 0 ? (
+            <p className="text-center text-gray-500">Nenhuma despesa encontrada</p>
+          ) : (
+            sortedExpenses.map((item) => (
+              <Card key={item.expense.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between gap-4 flex-wrap">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold truncate">{item.expense.establishment}</h3>
+                        {item.expense.totalInstallments > 1 && (
+                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                            {item.expense.currentInstallment}/{item.expense.totalInstallments}
+                          </span>
+                        )}
                       </div>
+                      <p className="text-sm text-gray-600">
+                        {item.category?.name} • {format(new Date(item.expense.purchaseDate), "dd/MM/yyyy", { locale: ptBR })}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-lg">{formatCurrency(item.expense.amount)}</p>
+                      <p className={`text-sm ${item.expense.paid === "yes" ? "text-green-600" : "text-orange-600"}`}>
+                        {item.expense.paid === "yes" ? "Pago" : "Não pago"}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => togglePaid(item)}
+                        title={item.expense.paid === "yes" ? "Marcar como não pago" : "Marcar como pago"}
+                      >
+                        <Check className={`w-4 h-4 ${item.expense.paid === "yes" ? "text-green-600" : "text-gray-400"}`} />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleEdit(item)}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleDelete(item.expense.id)}
+                      >
+                        <Trash2 className="w-4 h-4 text-red-600" />
+                      </Button>
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">Nenhuma despesa encontrada</div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="w-full max-w-md max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingExpense ? "Editar Despesa" : "Nova Despesa"}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {!editingExpense && (
-              <div className="border-b pb-4">
-                <Label className="text-sm font-medium">Extrair Dados do Recibo</Label>
-                <ReceiptUploader
-                  onImageSelected={(file, preview) => {
-                    setOcrImagePreview(preview);
-                  }}
-                  onExtract={(file) => {
-                    handleExtractOCR(file);
-                  }}
-                  isExtracting={isExtracting}
-                />
-              </div>
-            )}
-            <div>
-              <Label>Estabelecimento *</Label>
-              <Input
-                value={formData.establishment}
-                onChange={(e) => setFormData({ ...formData, establishment: e.target.value })}
-                placeholder="Ex: Supermercado, Restaurante..."
-                className="mt-2"
-              />
-            </div>
-
-            <div>
-              <Label>Valor (R$) *</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                placeholder="0,00"
-                className="mt-2"
-              />
-            </div>
-
-            <div>
-              <Label>Categoria *</Label>
-              <select
-                value={formData.categoryId}
-                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg"
-              >
-                <option value="">Selecione uma categoria</option>
-                {categories?.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <Label>Data da Compra *</Label>
-              <Input
-                type="date"
-                value={formData.purchaseDate}
-                onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })}
-                className="mt-2"
-              />
-            </div>
-
-            <div>
-              <Label>Status de Pagamento</Label>
-              <select
-                value={formData.paid}
-                onChange={(e) => setFormData({ ...formData, paid: e.target.value as "yes" | "no" })}
-                className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg"
-              >
-                <option value="no">Não Pago</option>
-                <option value="yes">Pago</option>
-              </select>
-            </div>
-
-            {formData.paid === "yes" && (
-              <div>
-                <Label>Data do Pagamento</Label>
-                <Input
-                  type="date"
-                  value={formData.paymentDate}
-                  onChange={(e) => setFormData({ ...formData, paymentDate: e.target.value })}
-                  className="mt-2"
-                />
-              </div>
-            )}
-
-            {!editingExpense && (
-              <div>
-                <Label>Parcelas</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  max="12"
-                  value={formData.totalInstallments}
-                  onChange={(e) => setFormData({ ...formData, totalInstallments: Number(e.target.value) })}
-                  placeholder="1"
-                  className="mt-2"
-                />
-                <p className="text-xs text-gray-500 mt-1">Número de parcelas (máximo 12)</p>
-              </div>
-            )}
-
-            {editingExpense && (
-              <div className="border-t pt-4">
-                <Label className="text-sm font-medium">Anexos</Label>
-                <ExpenseAttachmentUploadWithOCR expenseId={editingExpense.expense.id} />
-              </div>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={editingExpense ? handleSaveEdit : handleSaveNew}>
-              {editingExpense ? "Atualizar" : "Criar"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {showOCRModal && ocrResult && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setShowOCRModal(false)} />
-          <div className="relative bg-white rounded-lg shadow-lg max-w-md w-full mx-4">
-            <OCRResultModal
-              data={ocrResult}
-              imagePreview={ocrImagePreview}
-              onConclude={(confirmedData: ExtractedReceiptData) => {
-                setFormData({
-                  ...formData,
-                  establishment: confirmedData.establishment || formData.establishment,
-                  amount: confirmedData.value ? (confirmedData.value / 100).toString() : formData.amount,
-                  purchaseDate: confirmedData.date
-                    ? new Date(confirmedData.date).toISOString().split("T")[0]
-                    : formData.purchaseDate,
-                });
-                setShowOCRModal(false);
-                setOcrResult(null);
-                setIsDialogOpen(true);
-              }}
-              onCancel={() => {
-                setShowOCRModal(false);
-                setOcrResult(null);
-                setIsDialogOpen(true);
-              }}
-            />
-          </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
-      )}
 
-      {isExtracting && (
+        {/* Dialog para Nova/Editar Despesa */}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>{editingExpense ? "Editar Despesa" : "Nova Despesa"}</DialogTitle>
+              <DialogDescription>
+                {editingExpense ? "Atualize os dados da despesa" : "Preencha os dados da nova despesa"}
+              </DialogDescription>
+            </DialogHeader>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="establishment">Estabelecimento</Label>
+                <Input
+                  id="establishment"
+                  value={formData.establishment}
+                  onChange={(e) => setFormData({ ...formData, establishment: e.target.value })}
+                  placeholder="Ex: Supermercado, Restaurante..."
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="category">Categoria</Label>
+                <Select
+                  value={formData.categoryId}
+                  onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
+                  required
+                >
+                  <SelectTrigger id="category">
+                    <SelectValue placeholder="Selecione uma categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories?.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id.toString()}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="purchaseDate">Data da Compra</Label>
+                <Input
+                  id="purchaseDate"
+                  type="date"
+                  value={formData.purchaseDate}
+                  onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="amount">Valor (R$)</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.amount}
+                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                  placeholder="0,00"
+                  required
+                />
+              </div>
+              {!editingExpense && (
+                <div className="space-y-2">
+                  <Label htmlFor="installments">Parcelas</Label>
+                  <Input
+                    id="installments"
+                    type="number"
+                    min="1"
+                    max="12"
+                    value={formData.installments}
+                    onChange={(e) => setFormData({ ...formData, installments: parseInt(e.target.value) || 1 })}
+                    placeholder="1"
+                  />
+                  {formData.installments > 1 && (
+                    <p className="text-sm text-muted-foreground">
+                      Será criada {formData.installments} despesa(s)
+                    </p>
+                  )}
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="paid">Status de Pagamento</Label>
+                <Select
+                  value={formData.paid}
+                  onValueChange={(value: "yes" | "no") => setFormData({ ...formData, paid: value })}
+                >
+                  <SelectTrigger id="paid">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="no">Não pago</SelectItem>
+                    <SelectItem value="yes">Pago</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {formData.paid === "yes" && (
+                <div className="space-y-2">
+                  <Label htmlFor="paymentDate">Data do Pagamento</Label>
+                  <Input
+                    id="paymentDate"
+                    type="date"
+                    value={formData.paymentDate}
+                    onChange={(e) => setFormData({ ...formData, paymentDate: e.target.value })}
+                  />
+                </div>
+              )}
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={resetForm}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                  {editingExpense ? "Atualizar" : "Criar"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {showOCRModal && ocrResult && (
+          <OCRResultModal
+            data={ocrResult}
+            imagePreview={ocrImagePreview}
+            onConclude={handleOCRConclude}
+            onCancel={() => {
+              setShowOCRModal(false);
+              setOcrResult(null);
+            }}
+            isLoading={isExtracting}
+          />
+        )}
+
         <LoadingOverlay isVisible={isExtracting} message="Processando imagem..." />
-      )}
+      </div>
     </DashboardLayout>
   );
 }

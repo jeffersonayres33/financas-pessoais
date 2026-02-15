@@ -356,3 +356,14 @@
 - [x] Corrigir para manter consistência: sempre reais com ponto decimal
 - [x] Testar com múltiplos valores (R$ 293.81, R$ 100.00, R$ 1234.56)
 - [x] Validar que conversão para centavos funciona corretamente
+
+
+## Fase 46: Copiar Seção Despesas Completa da Versão 7b6d5f4
+- [x] Extrair Expenses.tsx completo da versão 7b6d5f4
+- [x] Extrair componentes relacionados (OCRResultModal, ReceiptUploader, etc)
+- [x] Comparar estrutura e funções entre versões
+- [x] Copiar Expenses.tsx da versão 7b6d5f4
+- [x] Adaptar layout e responsividade para versão atual
+- [x] Testar OCR com múltiplos valores e datas
+- [x] Validar conversão de valores (reais para centavos)
+- [x] Validar extração de datas do recibo
