@@ -320,3 +320,8 @@
 - [x] Identificar problemas na extração
 - [x] Melhorar algoritmo de extração
 - [x] Testar com múltiplas imagens
+
+## Fase 41: Corrigir Erro de String Vazia em src
+- [x] Identificar elemento com src vazio em Expenses.tsx
+- [x] Corrigir para usar null em vez de string vazia
+- [x] Testar página Expenses

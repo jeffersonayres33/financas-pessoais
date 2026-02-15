@@ -49,13 +49,15 @@ export default function OCRResultModal({
 
         <CardContent className="space-y-6">
           {/* Preview da Imagem */}
-          <div className="bg-gray-100 rounded-lg overflow-hidden">
-            <img
-              src={imagePreview}
-              alt="Recibo"
-              className="w-full h-auto max-h-64 object-contain"
-            />
-          </div>
+          {imagePreview && (
+            <div className="bg-gray-100 rounded-lg overflow-hidden">
+              <img
+                src={imagePreview}
+                alt="Recibo"
+                className="w-full h-auto max-h-64 object-contain"
+              />
+            </div>
+          )}
 
           {/* Badge de Confiança */}
           <div className="flex items-center gap-2">
