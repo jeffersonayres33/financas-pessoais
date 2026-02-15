@@ -325,3 +325,9 @@
 - [x] Identificar elemento com src vazio em Expenses.tsx
 - [x] Corrigir para usar null em vez de string vazia
 - [x] Testar página Expenses
+
+## Fase 42: Recuperar e Aplicar OCR da Versão 7b6d5f4e
+- [x] Recuperar código de OCR funcionando da versão 7b6d5f4e
+- [x] Aplicar código em Expenses.tsx
+- [x] Adicionar loading screen com engrenagem "Processando imagem"
+- [x] Testar extração de OCR
