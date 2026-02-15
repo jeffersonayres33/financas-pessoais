@@ -430,24 +430,35 @@ Formate a resposta em markdown com seções claras.`;
             messages: [
               {
                 role: "system",
-                content: `Você é um assistente especializado em extrair dados de recibos e notas fiscais. 
-Analize a imagem fornecida e extraia os seguintes dados em formato JSON:
+                content: `Você é um especialista em OCR e extração de dados de recibos.
+
+INSTRUÇÕES:
+1. Analise CUIDADOSAMENTE cada detalhe da imagem
+2. Se estiver rotacionada, rotacione mentalmente para ler
+3. Procure por TODOS os valores (total, subtotal)
+4. Identifique datas em qualquer formato
+5. Localize o estabelecimento mesmo se parcial
+6. Use o TOTAL final se houver múltiplos valores
+7. Seja preciso com centavos
+
+RETORNE APENAS JSON:
 {
-  "establishment": "nome do estabelecimento ou loja",
-  "amount": "valor total em centavos (número inteiro, ex: 1500 para R$ 15,00)",
-  "date": "data no formato YYYY-MM-DD",
-  "confidence": "nível de confiança da extração (alto, médio, baixo)",
-  "notes": "observações adicionais se houver"
+  "establishment": "nome completo",
+  "amount": "valor em reais (ex: 150.50)",
+  "date": "YYYY-MM-DD",
+  "confidence": "high|medium|low",
+  "description": "o que foi comprado",
+  "notes": "observações"
 }
 
-Se não conseguir extrair algum campo, use null. Retorne APENAS o JSON válido, sem explicações adicionais.`,
+Use null se não conseguir extrair.`,
               },
               {
                 role: "user",
                 content: [
                   {
                     type: "text",
-                    text: "Por favor, extraia os dados deste recibo:",
+                    text: "Extraia TODOS os dados visíveis com máxima precisão. Se rotacionada, rotacione mentalmente. Procure: valor total, data, estabelecimento, itens.",
                   },
                   {
                     type: "image_url",
@@ -474,16 +485,34 @@ Se não conseguir extrair algum campo, use null. Retorne APENAS o JSON válido, 
 
           const extractedData = JSON.parse(jsonMatch[0]);
 
+          // Normalizar valor
+          let amount = extractedData.amount;
+          if (typeof amount === "string") {
+            amount = parseFloat(amount.replace(/[^\d.,]/g, "").replace(",", "."));
+          }
+          amount = amount ? Math.round(amount * 100) : null;
+
+          // Normalizar data
+          let date = extractedData.date;
+          if (date && !date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            const dateMatch = date.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+            if (dateMatch) {
+              date = `${dateMatch[3]}-${String(dateMatch[2]).padStart(2, "0")}-${String(dateMatch[1]).padStart(2, "0")}`;
+            }
+          }
+
           // Validar e normalizar dados
           return {
             establishment: extractedData.establishment || null,
-            amount: extractedData.amount ? Number(extractedData.amount) : null,
-            date: extractedData.date || null,
+            amount: amount,
+            date: date || null,
             confidence: extractedData.confidence || "baixo",
+            description: extractedData.description || null,
             notes: extractedData.notes || null,
             success: true,
           };
         } catch (error) {
+          console.error("[OCR] Erro ao extrair dados:", error);
           return {
             success: false,
             error: error instanceof Error ? error.message : "Erro ao processar recibo",
@@ -491,6 +520,7 @@ Se não conseguir extrair algum campo, use null. Retorne APENAS o JSON válido, 
             amount: null,
             date: null,
             confidence: "baixo",
+            description: null,
             notes: null,
           };
         }

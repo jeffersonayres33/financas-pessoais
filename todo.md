@@ -314,3 +314,9 @@
 - [x] Restaurar campo de número de parcelas
 - [x] Restaurar lógica de criação de parcelas
 - [x] Testar parcelamento com múltiplas parcelas
+
+## Fase 40: Melhorar Função de Extração OCR
+- [x] Verificar função de OCR no backend
+- [x] Identificar problemas na extração
+- [x] Melhorar algoritmo de extração
+- [x] Testar com múltiplas imagens
