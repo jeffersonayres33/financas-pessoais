@@ -429,37 +429,37 @@ export default function Expenses() {
                     </div>
                     <div className="text-left sm:text-right">
                       <p className="font-bold text-base sm:text-lg">{formatCurrency(item.expense.amount)}</p>
-                      <p className={`text-xs sm:text-sm ${item.expense.paid === "yes" ? "text-green-600" : "text-orange-600"}`}>
+                      <p className={`text-xs sm:text-sm mb-2 ${item.expense.paid === "yes" ? "text-green-600" : "text-orange-600"}`}>
                         {item.expense.paid === "yes" 
                           ? `Pago em ${format(new Date(item.expense.paymentDate || item.expense.purchaseDate), "dd/MM/yyyy", { locale: ptBR })}` 
                           : "Não pago"}
                       </p>
+                      <div className="flex gap-2 justify-start sm:justify-end">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => togglePaid(item)}
+                          title={item.expense.paid === "yes" ? "Marcar como não pago" : "Marcar como pago"}
+                        >
+                          <Check className={`w-4 h-4 ${item.expense.paid === "yes" ? "text-green-600" : "text-gray-400"}`} />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleEdit(item)}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDelete(item.expense.id)}
+                        >
+                          <Trash2 className="w-4 h-4 text-red-600" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex gap-2 md:col-span-2 justify-start sm:justify-end">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => togglePaid(item)}
-                        title={item.expense.paid === "yes" ? "Marcar como não pago" : "Marcar como pago"}
-                      >
-                        <Check className={`w-4 h-4 ${item.expense.paid === "yes" ? "text-green-600" : "text-gray-400"}`} />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleEdit(item)}
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleDelete(item.expense.id)}
-                      >
-                        <Trash2 className="w-4 h-4 text-red-600" />
-                      </Button>
-                    </div>
-                    <div className="border-t border-gray-200 md:col-span-4 pt-2">
+                    <div className="col-span-1 sm:col-span-2 md:col-span-4 border-t border-gray-200 pt-2">
                       <p className="text-xs text-gray-500">
                         Criado em {format(new Date(item.expense.createdAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}
                       </p>

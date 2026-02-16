@@ -424,3 +424,11 @@
 - [x] Sincronizar layout com padrão do ToPay
 - [x] Testar em mobile, tablet e desktop
 - [x] Validar que todos os elementos ficam alinhados corretamente
+
+
+## Fase 53: Reposicionar Botões e Ajustar Linha Divisória
+- [x] Reposicionar botões para logo abaixo do status de pagamento
+- [x] Ajustar linha divisória para width 100%
+- [x] Testar layout em mobile, tablet e desktop
+- [x] Validar que botões ficam bem alinhados
+- [x] Validar que linha divisória ocupa toda a largura
