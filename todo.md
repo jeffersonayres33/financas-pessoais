@@ -441,3 +441,25 @@
 - [x] Adicionar funcionalidade de alternância de contas
 - [x] Testar fluxo completo de múltiplas contas
 - [x] Validar que dados são isolados por conta
+
+
+## Fase 55: Corrigir Erro "db is not defined" e activeAccountId null
+- [ ] Investigar erro "db is not defined" no servidor
+- [ ] Corrigir referência de db nos procedures tRPC de contas
+- [ ] Inicializar activeAccountId quando usuário faz login
+- [ ] Criar conta padrão automaticamente para novo usuário
+- [ ] Testar fluxo completo de login
+
+
+## Fase 35: Correção de Bug Crítico - Inicialização de Conta no Primeiro Login
+- [x] Identificar causa raiz: activeAccountId null no primeiro login
+- [x] Modificar upsertUser em db.ts para criar conta padrão automaticamente
+- [x] Definir activeAccountId para conta padrão criada
+- [x] Criar testes para validar criação de conta padrão
+- [x] Validar que conta não é duplicada em logins posteriores
+- [x] Adicionar validação de activeAccountId no contexto
+- [x] Criar helper validateActiveAccount para procedures
+- [x] Testar fluxo completo de login e alternância de contas
+- [x] Todos os 35 testes passando
+- [x] TypeScript sem erros
+- [x] Dev server rodando normalmente

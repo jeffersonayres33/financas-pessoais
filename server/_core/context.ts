@@ -15,6 +15,12 @@ export async function createContext(
 
   try {
     user = await sdk.authenticateRequest(opts.req);
+    
+    // Validar que usuário autenticado tem activeAccountId
+    if (user && !user.activeAccountId) {
+      console.warn(`[Context] Usuário ${user.id} (${user.openId}) sem activeAccountId definido`);
+      // Não lançar erro aqui, deixar para procedures validarem
+    }
   } catch (error) {
     // Authentication is optional for public procedures.
     user = null;

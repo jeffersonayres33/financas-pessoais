@@ -1,6 +1,6 @@
 import { and, between, desc, eq, sql, sum } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { budgetNotifications, categories, expenses, incomes, expenseAttachments, InsertCategory, InsertExpense, InsertIncome, InsertBudgetNotification, InsertExpenseAttachment, InsertUser, users } from "../drizzle/schema";
+import { budgetNotifications, categories, expenses, incomes, expenseAttachments, InsertCategory, InsertExpense, InsertIncome, InsertBudgetNotification, InsertExpenseAttachment, InsertUser, users, userAccounts, InsertUserAccount } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -71,6 +71,28 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     await db.insert(users).values(values).onDuplicateKeyUpdate({
       set: updateSet,
     });
+
+    // Verificar se é novo usuário (sem activeAccountId)
+    const existingUser = await getUserByOpenId(user.openId);
+    if (existingUser && !existingUser.activeAccountId) {
+      console.log(`[Database] Criando conta padrão para novo usuário: ${user.openId}`);
+      
+      // Criar conta padrão "Minha Conta"
+      const accountResult = await db.insert(userAccounts).values({
+        userId: existingUser.id,
+        accountName: "Minha Conta",
+        accountType: "personal",
+        description: "Conta padrão",
+        isDefault: 1,
+      });
+      
+      const accountId = accountResult[0].insertId;
+      
+      // Definir como conta ativa
+      await db.update(users).set({ activeAccountId: accountId }).where(eq(users.id, existingUser.id));
+      
+      console.log(`[Database] Conta padrão criada com sucesso. ID: ${accountId}`);
+    }
   } catch (error) {
     console.error("[Database] Failed to upsert user:", error);
     throw error;
