@@ -37,8 +37,17 @@ export function AccountSwitcher() {
   };
 
   const handleSwitchAccount = async (accountId: number) => {
+    const utils = trpc.useUtils();
     await switchMutation.mutateAsync({ accountId });
+    
+    // Invalidar todos os caches para recarregar dados da nova conta
+    await utils.auth.me.invalidate();
+    await utils.categories.list.invalidate();
+    await utils.expenses.list.invalidate();
+    await utils.incomes.list.invalidate();
+    
     listQuery.refetch();
+    setOpen(false); // Fechar modal após alternar
   };
 
   const handleDeleteAccount = async (accountId: number) => {

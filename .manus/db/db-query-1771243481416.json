@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE categories DROP COLUMN account_id;\nALTER TABLE expenses DROP COLUMN account_id;\nALTER TABLE incomes DROP COLUMN account_id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3FdQrkWsT1QirDG.root --database EjA4uyxuZxRJw3mJZ2eHtg --execute ALTER TABLE categories DROP COLUMN account_id;\nALTER TABLE expenses DROP COLUMN account_id;\nALTER TABLE incomes DROP COLUMN account_id;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 923
+}

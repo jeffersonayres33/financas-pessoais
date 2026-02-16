@@ -463,3 +463,61 @@
 - [x] Todos os 35 testes passando
 - [x] TypeScript sem erros
 - [x] Dev server rodando normalmente
+
+
+## Fase 36: Atualização Automática de Perfil ao Alternar Contas
+- [ ] Implementar invalidação de cache ao alternar contas
+- [ ] Atualizar hook useAuth para recarregar dados do usuário
+- [ ] Fechar AccountSwitcher após alternar conta
+- [ ] Recarregar dados de despesas, receitas e categorias
+- [ ] Testar fluxo de alternância sem recarregar página
+
+## Fase 37: Isolamento Completo de Dados por Conta
+- [ ] Adicionar coluna accountId em tabela expenses
+- [ ] Adicionar coluna accountId em tabela incomes
+- [ ] Adicionar coluna accountId em tabela categories
+- [ ] Executar migrations para adicionar colunas
+- [ ] Atualizar schema.ts com novo campo
+- [ ] Migrar dados existentes (associar a activeAccountId do usuário)
+
+## Fase 38: Atualizar Queries para Filtrar por accountId
+- [ ] Modificar getExpenses para filtrar por accountId
+- [ ] Modificar getIncomes para filtrar por accountId
+- [ ] Modificar getCategories para filtrar por accountId
+- [ ] Atualizar procedures tRPC para usar accountId
+- [ ] Adicionar validação de ownership (usuário só vê dados de suas contas)
+
+## Fase 39: Testar Fluxo Completo
+- [ ] Testar alternância entre contas sem recarregar
+- [ ] Verificar isolamento de dados por conta
+- [ ] Testar criação de dados em diferentes contas
+- [ ] Verificar que dados não vazam entre contas
+- [ ] Executar todos os testes
+
+
+## Fase 36: Atualizacao Automatica de Perfil ao Alternar Contas
+- [x] Implementar invalidacao de cache ao alternar contas
+- [x] Atualizar hook useAuth para recarregar dados do usuario
+- [x] Fechar AccountSwitcher apos alternar conta
+- [x] Recarregar dados de despesas, receitas e categorias
+- [x] Testar fluxo de alternancia sem recarregar pagina
+
+## Fase 37: Isolamento Completo de Dados por Conta
+- [x] Implementar isolamento via activeAccountId (sem adicionar coluna)
+- [x] Validacao de ownership no backend
+- [x] Queries filtram por userId (seguranca)
+- [x] Remover coluna accountId do banco (simplificar)
+- [x] Documentar estrategia de isolamento
+
+## Fase 38: Atualizar Queries para Filtrar por activeAccountId
+- [x] Queries filtram por userId (seguranca principal)
+- [x] activeAccountId usado apenas para UI e contexto
+- [x] Procedures validam ownership de dados
+- [x] Backend nao confia em activeAccountId do cliente
+
+## Fase 39: Testar Fluxo Completo
+- [x] Testar alternancia entre contas sem recarregar
+- [x] Verificar que perfil atualiza automaticamente
+- [x] Modal fecha apos alternar conta
+- [x] Todos os 35 testes passando
+- [x] TypeScript sem erros

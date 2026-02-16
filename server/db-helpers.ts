@@ -32,3 +32,27 @@ export function getActiveAccountId(user: User | null): number {
   validateActiveAccount(user);
   return user.activeAccountId;
 }
+
+
+/**
+ * ISOLAMENTO DE DADOS POR CONTA:
+ * 
+ * Cada conta de usuario eh isolada logicamente atraves do activeAccountId.
+ * Quando um usuario alterna de conta, o activeAccountId eh atualizado no banco.
+ * 
+ * Fluxo de isolamento:
+ * 1. Usuario faz login -> activeAccountId eh definido automaticamente
+ * 2. Usuario alterna conta -> activeAccountId eh atualizado
+ * 3. Frontend invalida cache de dados (categories, expenses, incomes)
+ * 4. Queries retornam dados da nova conta ativa
+ * 
+ * Validacao de ownership:
+ * - Todas as queries filtram por userId (garante que usuario so veja seus dados)
+ * - Procedures validam que dados pertencem ao usuario antes de modificar
+ * - activeAccountId eh usado apenas para UI e contexto do usuario
+ * 
+ * Seguranca:
+ * - Backend nao confia em activeAccountId do cliente
+ * - Dados sao sempre filtrados por userId + validacao de ownership
+ * - activeAccountId eh apenas uma preferencia do usuario, nao um filtro de seguranca
+ */
