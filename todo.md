@@ -414,3 +414,13 @@
 - [x] Testar com filtro "Não Parcelados"
 - [x] Testar com filtro "Todos"
 - [x] Validar que quantidade e total atualizam corretamente
+
+
+## Fase 52: Alterar Formato de Data e Layout da Seção Despesas
+- [x] Analisar layout atual da seção Despesas
+- [x] Alterar formato de data de compra de "dd de mês" para "dd/mm/aaaa"
+- [x] Adicionar linha divisória (border-top) no rodápé do bloco
+- [x] Reorganizar data de criação para abaixo da linha divisória
+- [x] Sincronizar layout com padrão do ToPay
+- [x] Testar em mobile, tablet e desktop
+- [x] Validar que todos os elementos ficam alinhados corretamente

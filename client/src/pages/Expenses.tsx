@@ -413,7 +413,7 @@ export default function Expenses() {
             sortedExpenses.map((item) => (
               <Card key={item.expense.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="pt-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-center">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <h3 className="font-semibold truncate text-sm sm:text-base">{item.expense.establishment}</h3>
@@ -424,7 +424,7 @@ export default function Expenses() {
                         )}
                       </div>
                       <p className="text-xs sm:text-sm text-gray-600 break-words">
-                        {item.category?.name} • {format(new Date(item.expense.purchaseDate), "dd 'de' MMMM", { locale: ptBR })}
+                        {item.category?.name} • {format(new Date(item.expense.purchaseDate), "dd/MM/yyyy", { locale: ptBR })}
                       </p>
                     </div>
                     <div className="text-left sm:text-right">
@@ -434,9 +434,6 @@ export default function Expenses() {
                           ? `Pago em ${format(new Date(item.expense.paymentDate || item.expense.purchaseDate), "dd/MM/yyyy", { locale: ptBR })}` 
                           : "Não pago"}
                       </p>
-                    </div>
-                    <div className="text-xs text-gray-500 md:col-span-2">
-                      Criado em {format(new Date(item.expense.createdAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}
                     </div>
                     <div className="flex gap-2 md:col-span-2 justify-start sm:justify-end">
                       <Button
@@ -461,6 +458,11 @@ export default function Expenses() {
                       >
                         <Trash2 className="w-4 h-4 text-red-600" />
                       </Button>
+                    </div>
+                    <div className="border-t border-gray-200 md:col-span-4 pt-2">
+                      <p className="text-xs text-gray-500">
+                        Criado em {format(new Date(item.expense.createdAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
