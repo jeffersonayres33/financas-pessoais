@@ -418,20 +418,25 @@ export default function Expenses() {
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <h3 className="font-semibold truncate text-sm sm:text-base">{item.expense.establishment}</h3>
                         {item.expense.totalInstallments > 1 && (
-                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                            {item.expense.currentInstallment}/{item.expense.totalInstallments}
+                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                            parcelado {item.expense.currentInstallment}/{item.expense.totalInstallments}
                           </span>
                         )}
                       </div>
                       <p className="text-xs sm:text-sm text-gray-600 break-words">
-                        {item.category?.name} • {format(new Date(item.expense.purchaseDate), "dd/MM/yyyy", { locale: ptBR })}
+                        {item.category?.name} • {format(new Date(item.expense.purchaseDate), "dd 'de' MMMM", { locale: ptBR })}
                       </p>
                     </div>
                     <div className="text-left sm:text-right">
                       <p className="font-bold text-base sm:text-lg">{formatCurrency(item.expense.amount)}</p>
                       <p className={`text-xs sm:text-sm ${item.expense.paid === "yes" ? "text-green-600" : "text-orange-600"}`}>
-                        {item.expense.paid === "yes" ? "Pago" : "Não pago"}
+                        {item.expense.paid === "yes" 
+                          ? `Pago em ${format(new Date(item.expense.paymentDate || item.expense.purchaseDate), "dd/MM/yyyy", { locale: ptBR })}` 
+                          : "Não pago"}
                       </p>
+                    </div>
+                    <div className="text-xs text-gray-500 md:col-span-2">
+                      Criado em {format(new Date(item.expense.createdAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}
                     </div>
                     <div className="flex gap-2 md:col-span-2 justify-start sm:justify-end">
                       <Button

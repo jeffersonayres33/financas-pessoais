@@ -394,3 +394,13 @@
 - [x] Melhorar responsividade da seção Despesa para alinhar dados corretamente
 - [x] Testar fluxo completo de OCR sem bloqueios visuais
 - [x] Validar responsividade em mobile, tablet e desktop
+
+
+## Fase 50: Melhorar Rótulos de Status, Parcelamento e Data/Hora de Criação
+- [x] Verificar schema de despesas para confirmar campo de data de criação
+- [x] Analisar padrão de exibição de data/hora do ToPay
+- [x] Atualizar rótulo de status: "Pago em [data]" (verde) ou "Não pago" (laranja)
+- [x] Atualizar rótulo de parcelamento: "Parcelado X/Y" com badge azul
+- [x] Adicionar data e hora de criação na listagem de despesas
+- [x] Testar em diferentes cenários (pago/não pago, parcelado/não parcelado)
+- [x] Validar que rótulos ficam visíveis e legíveis em mobile
