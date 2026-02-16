@@ -128,12 +128,14 @@ export default function Expenses() {
     onSuccess: (data) => {
       setOcrResult(data);
       setShowOCRModal(true);
+      setShowReceiptUploadModal(false);
       setIsExtracting(false);
     },
     onError: (error) => {
       console.error("Erro ao extrair dados:", error);
       toast.error("Erro ao extrair dados do recibo");
       setIsExtracting(false);
+      setShowReceiptUploadModal(true);
     },
   });
 
@@ -303,74 +305,90 @@ export default function Expenses() {
           </Button>
         </div>
 
-        {/* Filtros e Ordenação */}
+        {/* Filtros */}
         <Card>
           <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              <div>
-                <Label className="text-sm">Mês</Label>
+            <div className="flex flex-wrap gap-4 items-end">
+              <div className="flex-1 min-w-[150px]">
+                <Label className="text-sm font-medium text-gray-700">Mês</Label>
                 <select
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg"
+                  className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {months.map((month, index) => (
                     <option key={index} value={index + 1}>{month}</option>
                   ))}
                 </select>
               </div>
-              <div>
-                <Label className="text-sm">Ano</Label>
+              <div className="flex-1 min-w-[150px]">
+                <Label className="text-sm font-medium text-gray-700">Ano</Label>
                 <select
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(Number(e.target.value))}
-                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg"
+                  className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   {[2024, 2025, 2026].map((year) => (
                     <option key={year} value={year}>{year}</option>
                   ))}
                 </select>
               </div>
-              <div>
-                <Label className="text-sm">Categoria</Label>
+              <div className="flex-1 min-w-[180px]">
+                <Label className="text-sm font-medium text-gray-700">Categoria</Label>
                 <select
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg"
+                  className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="all">Todas</option>
+                  <option value="all">Todas as categorias</option>
                   {categories?.map((cat) => (
                     <option key={cat.id} value={cat.id}>{cat.name}</option>
                   ))}
                 </select>
               </div>
-              <div>
-                <Label className="text-sm">Status</Label>
+              <div className="flex-1 min-w-[150px]">
+                <Label className="text-sm font-medium text-gray-700">Status</Label>
                 <select
                   value={filterPaid}
                   onChange={(e) => setFilterPaid(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg"
+                  className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="all">Todos</option>
                   <option value="yes">Pagos</option>
                   <option value="no">Não Pagos</option>
                 </select>
               </div>
-              <div>
-                <Label className="text-sm">Ordenar por</Label>
+              <div className="flex-1 min-w-[150px]">
+                <Label className="text-sm font-medium text-gray-700">Parcelados</Label>
+                <select
+                  value={filterInstallments}
+                  onChange={(e) => setFilterInstallments(e.target.value)}
+                  className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Todos</option>
+                  <option value="installments">Parcelados</option>
+                  <option value="no-installments">Não Parcelados</option>
+                </select>
+              </div>
+              <div className="flex-1 min-w-[200px]">
+                <Label className="text-sm font-medium text-gray-700">Ordenar por</Label>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg"
+                  className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="date-new">Data (Recente)</option>
-                  <option value="date-old">Data (Antigo)</option>
-                  <option value="alpha-az">A-Z</option>
-                  <option value="alpha-za">Z-A</option>
-                  <option value="value-asc">Valor (Menor)</option>
-                  <option value="value-desc">Valor (Maior)</option>
+                  <option value="date-new">Data: Mais Novo</option>
+                  <option value="date-old">Data: Mais Velho</option>
+                  <option value="alpha-az">Alfabético: A-Z</option>
+                  <option value="alpha-za">Alfabético: Z-A</option>
+                  <option value="value-asc">Valor: Menor para Maior</option>
+                  <option value="value-desc">Valor: Maior para Menor</option>
                 </select>
               </div>
+              <Button variant="outline" className="gap-2">
+                <Filter className="w-4 h-4" />
+                Filtrar
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -395,27 +413,27 @@ export default function Expenses() {
             sortedExpenses.map((item) => (
               <Card key={item.expense.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="pt-6">
-                  <div className="flex items-center justify-between gap-4 flex-wrap">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold truncate">{item.expense.establishment}</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-center">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <h3 className="font-semibold truncate text-sm sm:text-base">{item.expense.establishment}</h3>
                         {item.expense.totalInstallments > 1 && (
                           <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
                             {item.expense.currentInstallment}/{item.expense.totalInstallments}
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-xs sm:text-sm text-gray-600 break-words">
                         {item.category?.name} • {format(new Date(item.expense.purchaseDate), "dd/MM/yyyy", { locale: ptBR })}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold text-lg">{formatCurrency(item.expense.amount)}</p>
-                      <p className={`text-sm ${item.expense.paid === "yes" ? "text-green-600" : "text-orange-600"}`}>
+                    <div className="text-left sm:text-right">
+                      <p className="font-bold text-base sm:text-lg">{formatCurrency(item.expense.amount)}</p>
+                      <p className={`text-xs sm:text-sm ${item.expense.paid === "yes" ? "text-green-600" : "text-orange-600"}`}>
                         {item.expense.paid === "yes" ? "Pago" : "Não pago"}
                       </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 md:col-span-2 justify-start sm:justify-end">
                       <Button
                         size="sm"
                         variant="ghost"

@@ -385,3 +385,12 @@
 - [x] Ajustar tamanho de imagem e texto para telas pequenas
 - [x] Testar em diferentes tamanhos de tela
 - [x] Validar que modal é responsivo em todos os dispositivos
+
+
+## Fase 49: Corrigir Fluxo OCR e Melhorar Filtros/Responsividade da Seção Despesa
+- [x] Fechar modal "Extrair Dados do Recibo" após processamento OCR
+- [x] Analisar filtros da seção A Pagar para copiar estilo
+- [x] Aplicar estilo de filtros (rótulos + botão filtrar) na seção Despesa
+- [x] Melhorar responsividade da seção Despesa para alinhar dados corretamente
+- [x] Testar fluxo completo de OCR sem bloqueios visuais
+- [x] Validar responsividade em mobile, tablet e desktop
