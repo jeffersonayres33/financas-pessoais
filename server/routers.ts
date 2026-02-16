@@ -787,5 +787,108 @@ Use null se não conseguir extrair.`,
         return extractReceiptData(input.imageUrl);
       }),
   }),
+
+  accounts: router({
+    list: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { getDb } = await import("./db");
+        const { eq } = await import("drizzle-orm");
+        const { userAccounts } = await import("../drizzle/schema");
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+        return await db.select().from(userAccounts).where(eq(userAccounts.userId, ctx.user.id));
+      }),
+
+    create: protectedProcedure
+      .input(
+        z.object({
+          accountName: z.string().min(1).max(100),
+          accountType: z.enum(["personal", "business", "family", "other"]).default("personal"),
+          description: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const { getDb } = await import("./db");
+        const { userAccounts, users } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+
+        const result = await db.insert(userAccounts).values({
+          userId: ctx.user.id,
+          accountName: input.accountName,
+          accountType: input.accountType,
+          description: input.description,
+          isDefault: 0,
+        });
+
+        const accountId = typeof result === "object" && "insertId" in result ? Number((result as any).insertId) : 0;
+        const accounts = await db.select().from(userAccounts).where(eq(userAccounts.userId, ctx.user.id));
+        if (accounts.length === 1) {
+          await db.update(users).set({ activeAccountId: accountId }).where(eq(users.id, ctx.user.id));
+        }
+
+        return { id: accountId, success: true };
+      }),
+
+    switchAccount: protectedProcedure
+      .input(z.object({ accountId: z.number().int() }))
+      .mutation(async ({ ctx, input }) => {
+        const { getDb } = await import("./db");
+        const { users, userAccounts } = await import("../drizzle/schema");
+        const { eq, and } = await import("drizzle-orm");
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+
+        const account = await db
+          .select()
+          .from(userAccounts)
+          .where(and(eq(userAccounts.id, input.accountId), eq(userAccounts.userId, ctx.user.id)));
+
+        if (account.length === 0) {
+          throw new Error("Conta nao encontrada");
+        }
+
+        await db.update(users).set({ activeAccountId: input.accountId }).where(eq(users.id, ctx.user.id));
+
+        return { success: true, accountId: input.accountId };
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ accountId: z.number().int() }))
+      .mutation(async ({ ctx, input }) => {
+        const { getDb } = await import("./db");
+        const { userAccounts, users } = await import("../drizzle/schema");
+        const { eq, and } = await import("drizzle-orm");
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+
+        const account = await db
+          .select()
+          .from(userAccounts)
+          .where(and(eq(userAccounts.id, input.accountId), eq(userAccounts.userId, ctx.user.id)));
+
+        if (account.length === 0) {
+          throw new Error("Conta nao encontrada");
+        }
+
+        const allAccounts = await db.select().from(userAccounts).where(eq(userAccounts.userId, ctx.user.id));
+        if (allAccounts.length === 1) {
+          throw new Error("Nao eh possivel deletar a ultima conta");
+        }
+
+        const user = await db.select().from(users).where(eq(users.id, ctx.user.id));
+        if (user[0]?.activeAccountId === input.accountId) {
+          const otherAccount = allAccounts.find((a: any) => a.id !== input.accountId);
+          if (otherAccount) {
+            await db.update(users).set({ activeAccountId: otherAccount.id }).where(eq(users.id, ctx.user.id));
+          }
+        }
+
+        await db.delete(userAccounts).where(eq(userAccounts.id, input.accountId));
+
+        return { success: true };
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;

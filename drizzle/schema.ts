@@ -17,6 +17,7 @@ export const users = mysqlTable("users", {
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  activeAccountId: int("active_account_id"), // ID da conta ativa (referencia userAccounts)
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -24,6 +25,23 @@ export const users = mysqlTable("users", {
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
+
+/**
+ * Contas de usuário para suportar múltiplas contas por usuário
+ */
+export const userAccounts = mysqlTable("user_accounts", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  accountName: varchar("account_name", { length: 100 }).notNull(), // Nome da conta (ex: "Pessoal", "Trabalho")
+  accountType: mysqlEnum("account_type", ["personal", "business", "family", "other"]).default("personal").notNull(),
+  description: text("description"), // Descrição opcional da conta
+  isDefault: int("is_default").notNull().default(0), // 0 ou 1
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+
+export type UserAccount = typeof userAccounts.$inferSelect;
+export type InsertUserAccount = typeof userAccounts.$inferInsert;
 
 /**
  * Categorias de despesas e receitas
