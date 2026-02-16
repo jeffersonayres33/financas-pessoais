@@ -283,7 +283,7 @@ export default function ToPay() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-red-700">Despesas Pendentes</p>
-                <p className="text-2xl font-bold text-red-900">{unpaidExpenses?.length || 0}</p>
+                <p className="text-2xl font-bold text-red-900">{filteredExpenses?.length || 0}</p>
               </div>
               <div>
                 <p className="text-sm text-red-700">Total a Pagar</p>

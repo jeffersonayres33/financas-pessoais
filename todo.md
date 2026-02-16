@@ -404,3 +404,13 @@
 - [x] Adicionar data e hora de criação na listagem de despesas
 - [x] Testar em diferentes cenários (pago/não pago, parcelado/não parcelado)
 - [x] Validar que rótulos ficam visíveis e legíveis em mobile
+
+
+## Fase 51: Corrigir Filtro Parcelados em A Pagar
+- [x] Investigar filtro Parcelados em ToPay.tsx
+- [x] Identificar onde resumo de Despesas Pendentes é calculado
+- [x] Corrigir cálculo do resumo para aplicar filtro Parcelados
+- [x] Testar com filtro "Parcelados"
+- [x] Testar com filtro "Não Parcelados"
+- [x] Testar com filtro "Todos"
+- [x] Validar que quantidade e total atualizam corretamente
